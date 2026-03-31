@@ -28,6 +28,7 @@ export default function ReportDetail() {
   const [showSummary, setShowSummary] = useState(false)
   const [showAnalysis, setShowAnalysis] = useState(false)
   const [showExtractionInfo, setShowExtractionInfo] = useState(false)
+  const [togglingPermission, setTogglingPermission] = useState(false)
   const lastSymptomInputRef = useRef(null)
 
   useEffect(() => {
@@ -46,8 +47,23 @@ export default function ReportDetail() {
     }
   }
 
-  const triggerAIAnalysis = async () => {
+  const handleToggleDoctorPermission = async () => {
+    const newValue = !report.doctor_edit_permission
     try {
+      setTogglingPermission(true)
+      const response = await api.put(`/medical-reports/${reportId}/doctor-edit-permission`, { allow: newValue })
+      if (response.data.success) {
+        setReport(response.data.report)
+        toast.success(newValue ? 'Doctor can now edit this report' : 'Doctor edit access revoked')
+      }
+    } catch (error) {
+      toast.error('Failed to update permission')
+    } finally {
+      setTogglingPermission(false)
+    }
+  }
+
+  const triggerAIAnalysis = async () => {    try {
       setAnalyzing(true)
       toast.loading('Analyzing report with AI...', { id: 'ai-analysis' })
 
@@ -626,6 +642,10 @@ export default function ReportDetail() {
     );
   };
 
+  const isDoctor = userProfile?.role === 'DOCTOR'
+  const isPatient = userProfile?.role === 'PATIENT'
+  const canEdit = isPatient || (isDoctor && report?.doctor_edit_permission === true)
+
   return (
     <div className="min-h-screen bg-gray-50 pt-20 pb-10 font-sans print:bg-white print:py-0">
       {/* Print Header */}
@@ -693,7 +713,8 @@ export default function ReportDetail() {
                 )}
               </div>
               <div className="flex items-center gap-1.5 flex-wrap print:hidden">
-                {(userProfile?.uid === report?.patient_id || userProfile?.role === 'ADMIN') && (
+                {/* Patient / Admin only: delete */}
+                {!isDoctor && (userProfile?.uid === report?.patient_id || userProfile?.role === 'ADMIN') && (
                   <button
                     onClick={handleDeleteReport}
                     className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors"
@@ -702,6 +723,7 @@ export default function ReportDetail() {
                     Delete
                   </button>
                 )}
+                {/* Chat — both roles when doctor assigned */}
                 {report.assigned_doctor_id && (
                   <button
                     onClick={() => navigate(`/chat/${reportId}`)}
@@ -711,21 +733,24 @@ export default function ReportDetail() {
                     Chat
                   </button>
                 )}
-                <button
-                  onClick={triggerAIAnalysis}
-                  disabled={analyzing}
-                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${analyzing ? 'bg-gray-200 text-gray-400 cursor-not-allowed' :
-                      !aiAnalysis || Object.keys(aiAnalysis).length === 0
-                        ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
-                        : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200'
-                    }`}
-                >
-                  {analyzing ? (
-                    <><div className="animate-spin rounded-full h-3 w-3 border border-white border-t-transparent" />Analyzing...</>
-                  ) : (
-                    <><Brain className="w-3.5 h-3.5" />{!aiAnalysis || Object.keys(aiAnalysis).length === 0 ? 'Analyze with AI' : 'Re-analyze'}</>
-                  )}
-                </button>
+                {/* AI Analyze — patient/admin only */}
+                {!isDoctor && (
+                  <button
+                    onClick={triggerAIAnalysis}
+                    disabled={analyzing}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${analyzing ? 'bg-gray-200 text-gray-400 cursor-not-allowed' :
+                        !aiAnalysis || Object.keys(aiAnalysis).length === 0
+                          ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
+                          : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200'
+                      }`}
+                  >
+                    {analyzing ? (
+                      <><div className="animate-spin rounded-full h-3 w-3 border border-white border-t-transparent" />Analyzing...</>
+                    ) : (
+                      <><Brain className="w-3.5 h-3.5" />{!aiAnalysis || Object.keys(aiAnalysis).length === 0 ? 'Analyze with AI' : 'Re-analyze'}</>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -832,6 +857,43 @@ export default function ReportDetail() {
             </div>
           </div>
         </div> */}
+
+        {/* ── Doctor read-only banner ── */}
+        {isDoctor && (
+          <div className={`mb-4 rounded-xl border px-4 py-3 flex items-center gap-3 print:hidden ${report.doctor_edit_permission ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
+            {report.doctor_edit_permission ? (
+              <>
+                <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />
+                <p className="text-sm text-green-800 font-medium">Patient has granted you edit access for this report.</p>
+              </>
+            ) : (
+              <>
+                <Info className="w-5 h-5 text-amber-600 shrink-0" />
+                <p className="text-sm text-amber-800 font-medium">This report is read-only. The patient has not granted edit access. Ask the patient to enable it via chat.</p>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── Patient: doctor edit permission toggle ── */}
+        {isPatient && report.assigned_doctor_id && (
+          <div className={`mb-4 rounded-xl border px-4 py-3 flex items-center justify-between gap-3 print:hidden ${report.doctor_edit_permission ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+            <div className="flex items-center gap-2">
+              <Edit3 className={`w-4 h-4 shrink-0 ${report.doctor_edit_permission ? 'text-green-600' : 'text-gray-500'}`} />
+              <div>
+                <p className="text-sm font-medium text-gray-800">Doctor edit access</p>
+                <p className="text-xs text-gray-500">{report.doctor_edit_permission ? 'Your doctor can edit this report' : 'Your doctor can only view this report'}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleToggleDoctorPermission}
+              disabled={togglingPermission}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${report.doctor_edit_permission ? 'bg-green-500' : 'bg-gray-300'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${report.doctor_edit_permission ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+        )}
 
         {/* ── Tab Navigation ── */}
         <div className="flex items-center gap-1 mb-4 bg-white rounded-lg border border-gray-200 shadow-sm p-1 overflow-x-auto scrollbar-hide print:hidden">
@@ -1040,7 +1102,7 @@ export default function ReportDetail() {
             </div>
           )}
 
-          {(!aiAnalysis || Object.keys(aiAnalysis).length === 0) && (
+          {(!aiAnalysis || Object.keys(aiAnalysis).length === 0) && !isDoctor && (
             <div className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-300 rounded-xl p-6 shadow-lg print:hidden">
               <div className="flex items-start gap-4">
                 <div className="p-3 bg-red-200 rounded-lg">
@@ -1147,7 +1209,7 @@ export default function ReportDetail() {
               { }
 
               { }
-              {(shouldShowSection(patientInfo, 'object') || editMode) && (
+              {(shouldShowSection(patientInfo, 'object') || (editMode && canEdit)) && (
                 <div className="card p-6 border border-gray-100">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
@@ -1156,7 +1218,7 @@ export default function ReportDetail() {
                       </div>
                       <h2 className="text-xl font-bold text-gray-900">Patient Demographics</h2>
                     </div>
-                    {!isPrinting && (
+                    {!isPrinting && canEdit && (
                       <div className="flex items-center gap-2">
                         {editMode && editSection === 'patient_info' ? (
                           <>
@@ -1471,7 +1533,7 @@ export default function ReportDetail() {
               )}
 
               { }
-              {(shouldShowSection(diagnoses, 'array') || editMode) ? (
+              {(shouldShowSection(diagnoses, 'array') || (editMode && canEdit)) ? (
                 <div className="card p-6 border border-gray-100">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
@@ -1483,7 +1545,7 @@ export default function ReportDetail() {
                         <p className="text-sm text-gray-600">Identified conditions and diagnoses</p>
                       </div>
                     </div>
-                    {!isPrinting && (
+                    {!isPrinting && canEdit && (
                       <div className="flex items-center gap-2">
                         {editMode && editSection === 'diagnoses' ? (
                           <>
@@ -1592,7 +1654,7 @@ export default function ReportDetail() {
                 <div className="card p-8 text-center border border-gray-100">
                   <Stethoscope className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-600">No diagnoses extracted from this report</p>
-                  {!isPrinting && (
+                  {!isPrinting && canEdit && (
                     <button
                       onClick={() => startEdit('diagnoses')}
                       className="mt-4 flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors mx-auto"
@@ -1605,7 +1667,7 @@ export default function ReportDetail() {
               )}
 
               { }
-              {(shouldShowSection(symptoms, 'array') || editMode) ? (
+              {(shouldShowSection(symptoms, 'array') || (editMode && canEdit)) ? (
                 <div className="card p-6 border border-gray-100">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
@@ -1617,7 +1679,7 @@ export default function ReportDetail() {
                         <p className="text-sm text-gray-600">Patient complaints and clinical observations</p>
                       </div>
                     </div>
-                    {!isPrinting && (
+                    {!isPrinting && canEdit && (
                       <div className="flex items-center gap-2">
                         {editMode && editSection === 'symptoms' ? (
                           <>
@@ -1706,7 +1768,7 @@ export default function ReportDetail() {
                 <div className="card p-8 text-center border border-gray-100">
                   <AlertTriangle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-600">No symptoms extracted from this report</p>
-                  {!isPrinting && (
+                  {!isPrinting && canEdit && (
                     <button
                       onClick={() => startEdit('symptoms')}
                       className="mt-4 flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors mx-auto"
@@ -2087,7 +2149,7 @@ export default function ReportDetail() {
               )}
 
               { }
-              {(shouldShowSection(medications, 'array') || editMode) ? (
+              {(shouldShowSection(medications, 'array') || (editMode && canEdit)) ? (
                 <div className="space-y-6">
                   <div className="card p-6 border border-gray-100">
                     <div className="flex items-center justify-between mb-6">
@@ -2100,7 +2162,7 @@ export default function ReportDetail() {
                           <p className="text-sm text-gray-600">Active prescriptions and treatment plan</p>
                         </div>
                       </div>
-                      {!isPrinting && (
+                      {!isPrinting && canEdit && (
                         <div className="flex items-center gap-2">
                           {editMode && editSection === 'medications' ? (
                             <>
@@ -2326,7 +2388,7 @@ export default function ReportDetail() {
                   <Pill className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">No Medications</h3>
                   <p className="text-gray-600">No medication information was extracted from this report.</p>
-                  {!isPrinting && (
+                  {!isPrinting && canEdit && (
                     <button
                       onClick={() => startEdit('medications')}
                       className="mt-4 flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors mx-auto"
