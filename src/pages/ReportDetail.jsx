@@ -2521,14 +2521,7 @@ export default function ReportDetail() {
                       <p className="text-blue-100 text-sm mt-1">Medical report has been successfully analyzed</p>
                       {analysisResults.analyzed_by && (
                         <div className="flex items-center gap-2 mt-2">
-                          <span className="px-3 py-1 bg-white/20 rounded-lg text-xs font-semibold backdrop-blur-sm">
-                            🤖 Analyzed by: {analysisResults.analyzed_by}
-                          </span>
-                          {analysisResults.model_used && (
-                            <span className="px-3 py-1 bg-white/20 rounded-lg text-xs font-semibold backdrop-blur-sm">
-                              📊 Model: {analysisResults.model_used}
-                            </span>
-                          )}
+                          
                         </div>
                       )}
                     </div>
