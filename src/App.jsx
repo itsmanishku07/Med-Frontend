@@ -20,6 +20,7 @@ const ChatList = lazy(() => import('./pages/ChatList'))
 const ChatRealtime = lazy(() => import('./pages/ChatRealtime'))
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
 const Notifications = lazy(() => import('./pages/Notifications'))
+const MedicineReminders = lazy(() => import('./pages/MedicineReminders'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 function App() {
@@ -92,6 +93,12 @@ function App() {
                     <Route path="/notifications" element={
                       <ProtectedRoute>
                         <Notifications />
+                      </ProtectedRoute>
+                    } />
+
+                    <Route path="/medicine-reminders" element={
+                      <ProtectedRoute allowedRoles={['PATIENT']}>
+                        <MedicineReminders />
                       </ProtectedRoute>
                     } />
                     

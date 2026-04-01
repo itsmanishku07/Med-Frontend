@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/FirebaseAuthContext'
-import { Menu, X, User, LogOut, Activity, Users, Home, FileText, MessageSquare, Bell } from 'lucide-react'
+import { Menu, X, User, LogOut, Activity, Users, Home, FileText, MessageSquare, Bell, Pill } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 
 const Navbar = () => {
@@ -64,6 +64,18 @@ const Navbar = () => {
       path: '/doctor-dashboard',
       icon: Users,
       show: isDoctor || isAdmin
+    },
+    {
+      name: 'Reminders',
+      path: '/medicine-reminders',
+      icon: Pill,
+      show: isPatient
+    },
+    {
+      name: 'Profile',
+      path: '/profile',
+      icon: User,
+      show: isAuthenticated
     }
   ]
 
