@@ -3,8 +3,8 @@ import { toast } from 'react-hot-toast'
 import { useAuth } from '../contexts/FirebaseAuthContext'
 import api from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
-import { 
-  User, Mail, Phone, MapPin, Edit3, Save, X, Plus, Stethoscope
+import {
+  User, Mail, Phone, MapPin, Edit3, Save, X, Plus, Stethoscope, Camera
 } from 'lucide-react'
 
 const MEDICAL_SPECIALIZATIONS = [
@@ -23,16 +23,17 @@ function Profile() {
   const [saving, setSaving] = useState(false)
   const [profile, setProfile] = useState(null)
   const [editingSection, setEditingSection] = useState(null)
-  
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     location: '',
     bio: ''
   })
-  
+
   const [specializations, setSpecializations] = useState([])
   const [showSpecializationDropdown, setShowSpecializationDropdown] = useState(false)
+  const [selectedImage, setSelectedImage] = useState(null)
 
   useEffect(() => {
     loadProfile()
@@ -41,18 +42,18 @@ function Profile() {
   const loadProfile = async () => {
     try {
       const response = await api.get('/auth/profile')
-      
+
       if (response.data.success) {
         const userData = response.data.user
         setProfile(userData)
-        
+
         setFormData({
           name: userData.name || '',
           phone: userData.phone || '',
           location: userData.profile?.location || '',
           bio: userData.profile?.bio || ''
         })
-        
+
         setSpecializations(userData.specializations || [])
       }
     } catch (error) {
@@ -67,6 +68,57 @@ function Profile() {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('Image is too large. Please select an image under 10MB.')
+        return
+      }
+
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const img = new Image()
+        img.onload = () => {
+          // Create a canvas to resize/compress the image
+          const canvas = document.createElement('canvas')
+          let width = img.width
+          let height = img.height
+
+          // Max dimensions for profile picture
+          const MAX_WIDTH = 800
+          const MAX_HEIGHT = 800
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width
+              width = MAX_WIDTH
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height
+              height = MAX_HEIGHT
+            }
+          }
+
+          canvas.width = width
+          canvas.height = height
+          const ctx = canvas.getContext('2d')
+          ctx.drawImage(img, 0, 0, width, height)
+
+          // Compress to JPEG with 0.7 quality
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7)
+          setSelectedImage(compressedDataUrl)
+        }
+        img.src = event.target.result
+      }
+      reader.onerror = () => {
+        toast.error('Failed to read image file')
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const handleSave = async () => {
     if (!formData.name.trim()) {
       toast.error('Name is required')
@@ -78,6 +130,7 @@ function Profile() {
         name: formData.name.trim(),
         phone: formData.phone,
         specializations: specializations,
+        profile_picture: selectedImage || profile?.profile_picture,
         profile: {
           location: formData.location,
           bio: formData.bio
@@ -87,7 +140,7 @@ function Profile() {
         toast.success('Profile updated!')
         setProfile(response.data.user)
         setEditingSection(null)
-        updateAuthProfile(response.data.user)
+        updateProfile(response.data.user)
       }
     } catch (error) {
       toast.error('Failed to update profile')
@@ -119,17 +172,54 @@ function Profile() {
   const isDoctor = profile?.role === 'DOCTOR'
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-6">
-      {}
+    <div className="max-w-4xl mx-auto space-y-6 px-4 pt-28 pb-12 sm:px-6 lg:px-8">
+      { }
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 text-white">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-6">
-            <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center text-4xl font-bold border-4 border-white/30">
-              {profile?.name?.charAt(0)?.toUpperCase() || 'U'}
+            <div className="relative group">
+              <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-4 border-white/30">
+                {(selectedImage || profile?.profile_picture) ? (
+                  <img
+                    src={selectedImage || profile?.profile_picture}
+                    alt={profile?.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-4xl font-bold">
+                    {profile?.name?.charAt(0)?.toUpperCase() || 'U'}
+                  </span>
+                )}
+              </div>
+              <label className="absolute bottom-0 right-0 p-1.5 bg-blue-600 rounded-full border-2 border-white cursor-pointer hover:bg-blue-700 transition-colors shadow-lg">
+                <Camera className="w-4 h-4 text-white" />
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+              </label>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">{profile?.name}</h1>
-              <p className="text-blue-200 mt-1">{profile?.email}</p>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-4 mb-1">
+                <h1 className="text-3xl font-bold truncate">{profile?.name}</h1>
+                {(selectedImage || editingSection) && (
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="flex items-center gap-2 px-4 py-1.5 bg-white text-blue-600 rounded-full font-bold text-sm hover:bg-blue-50 transition-all shadow-lg active:scale-95 disabled:opacity-50 shrink-0"
+                  >
+                    {saving ? (
+                      <LoadingSpinner size="small" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    Save Changes
+                  </button>
+                )}
+              </div>
+              <p className="text-blue-100 mt-1">{profile?.email}</p>
               <div className="flex items-center gap-2 mt-2">
                 <span className="px-3 py-1 rounded-full text-sm font-medium bg-white/20">
                   {profile?.role}
@@ -145,7 +235,7 @@ function Profile() {
         </div>
       </div>
 
-      {}
+      { }
       <div className="bg-white rounded-xl shadow-md p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -160,7 +250,7 @@ function Profile() {
             {editingSection === 'basic' ? 'Cancel' : 'Edit'}
           </button>
         </div>
-        
+
         {editingSection === 'basic' ? (
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -258,7 +348,7 @@ function Profile() {
         )}
       </div>
 
-      {}
+      { }
       {isDoctor && (
         <div className="bg-white rounded-xl shadow-md p-6">
           <div className="flex justify-between items-center mb-4">
@@ -281,7 +371,7 @@ function Profile() {
                 Select your medical specializations. This helps match you with relevant patient cases.
               </p>
 
-              {}
+              { }
               <div className="flex flex-wrap gap-2 min-h-[40px] p-3 border-2 border-dashed border-gray-300 rounded-lg">
                 {specializations.length === 0 ? (
                   <span className="text-gray-400 text-sm">No specializations selected</span>
@@ -303,7 +393,7 @@ function Profile() {
                 )}
               </div>
 
-              {}
+              { }
               <div className="relative">
                 <button
                   onClick={() => setShowSpecializationDropdown(!showSpecializationDropdown)}
@@ -323,9 +413,8 @@ function Profile() {
                         <button
                           key={spec}
                           onClick={() => toggleSpecialization(spec)}
-                          className={`w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center justify-between ${
-                            isSelected ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                          }`}
+                          className={`w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center justify-between ${isSelected ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                            }`}
                         >
                           <span>{spec}</span>
                           {isSelected && (
@@ -398,7 +487,7 @@ const InfoItem = ({ icon, label, value }) => {
       </div>
     )
   }
-  
+
   return (
     <div className="flex items-center p-3 bg-gray-50 rounded-lg">
       {icon}

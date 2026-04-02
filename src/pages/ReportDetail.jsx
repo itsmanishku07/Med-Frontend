@@ -776,7 +776,7 @@ export default function ReportDetail() {
               </div>
               <div className="flex items-center gap-1.5 flex-wrap print:hidden">
                 {/* Patient / Admin only: delete */}
-                {!isDoctor && (userProfile?.uid === report?.patient_id || userProfile?.role === 'ADMIN') && (
+                {!isDoctor && (userProfile?.id === report?.patient_id || userProfile?.role === 'ADMIN') && (
                   <button
                     onClick={handleDeleteReport}
                     className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors"

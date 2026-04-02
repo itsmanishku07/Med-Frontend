@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/FirebaseAuthContext'
-import { Send, ArrowLeft, FileText, User, Circle, Image as ImageIcon, X } from 'lucide-react'
+import { Send, ArrowLeft, FileText, User, Circle, Image as ImageIcon, X, Trash2 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import socketService from '../services/socket'
 import api from '../services/api'
@@ -81,13 +81,13 @@ export default function ChatRealtime() {
             return updated.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
           })
           
-          if (message.sender_id !== userProfile?.uid) {
+          if (message.sender_id !== userProfile?.id) {
             socketService.markAsRead(chatData.id)
           }
         })
 
         socketService.onUserTyping((data) => {
-          if (data.user_id !== userProfile?.uid) {
+          if (data.user_id !== userProfile?.id) {
             setTyping(data.is_typing ? data.user_name : null)
             
             if (data.is_typing) {
@@ -170,7 +170,7 @@ export default function ChatRealtime() {
       const optimisticMessage = {
         id: tempId,
         chat_id: chat.id,
-        sender_id: userProfile?.uid,
+        sender_id: userProfile?.id,
         sender_role: userProfile?.role,
         sender_name: userProfile?.name,
         message_type: messageType,
@@ -259,6 +259,25 @@ export default function ChatRealtime() {
     return groups
   }
 
+  const handleDeleteChat = async () => {
+    if (!window.confirm("Are you sure you want to delete this conversation? This cannot be undone.")) {
+      return
+    }
+    
+    try {
+      const response = await api.delete(`/chats/${chat.id}`)
+      if (response.data.success) {
+        toast.success("Chat deleted successfully")
+        navigate('/')
+      } else {
+        toast.error("Failed to delete chat")
+      }
+    } catch (error) {
+      console.error("Error deleting chat:", error)
+      toast.error("An error occurred while deleting the chat")
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -323,6 +342,15 @@ export default function ChatRealtime() {
             <FileText className="w-4 h-4" />
             View Report
           </button>
+          {chat && (
+            <button
+              onClick={handleDeleteChat}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="Delete Chat"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
           <button
             onClick={() => navigate('/')}
             className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
@@ -346,7 +374,7 @@ export default function ChatRealtime() {
             {}
             <div className="space-y-3">
               {msgs.map((message, index) => {
-                const isOwn = message.sender_id === userProfile?.uid
+                const isOwn = message.sender_id === userProfile?.id
                 const showAvatar = index === 0 || msgs[index - 1].sender_id !== message.sender_id
 
                 return (

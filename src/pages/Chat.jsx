@@ -119,7 +119,7 @@ export default function Chat() {
         ) : (
           <div className="space-y-4">
             {messages.map((message, index) => {
-              const isOwnMessage = message.sender_id === userProfile?.uid
+              const isOwnMessage = message.sender_id === userProfile?.id
               return (
                 <div
                   key={index}
