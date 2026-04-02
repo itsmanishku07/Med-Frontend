@@ -5,7 +5,7 @@ import {
   ArrowLeft, FileText, User, Calendar, Activity, AlertTriangle,
   Heart, Thermometer, Droplet, Wind, CheckCircle, XCircle,
   Pill, Clipboard, TrendingUp, Brain, Stethoscope, Info, Printer, MessageSquare,
-  Edit3, Save, X, Plus, Trash2, ChevronDown, ChevronUp
+  Edit3, Save, X, Plus, Trash2, ChevronDown, ChevronUp, Send
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import api from '../services/api'
@@ -30,10 +30,72 @@ export default function ReportDetail() {
   const [showExtractionInfo, setShowExtractionInfo] = useState(false)
   const [togglingPermission, setTogglingPermission] = useState(false)
   const lastSymptomInputRef = useRef(null)
+  const chatEndRef = useRef(null)
+  const [aiChatHistory, setAiChatHistory] = useState([])
+  const [aiQuestion, setAiQuestion] = useState('')
+  const [isAskingAI, setIsAskingAI] = useState(false)
+  const [loadingHistory, setLoadingHistory] = useState(false)
 
   useEffect(() => {
     fetchReport()
+    fetchAIChatHistory()
   }, [reportId])
+
+  useEffect(() => {
+    if (activeTab === 'ai-chat') {
+      scrollToBottom()
+    }
+  }, [aiChatHistory, activeTab])
+
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  const fetchAIChatHistory = async () => {
+    try {
+      setLoadingHistory(true)
+      const response = await api.get(`/medical-reports/${reportId}/ai-chat`)
+      if (response.data.success) {
+        setAiChatHistory(response.data.history)
+      }
+    } catch (error) {
+      console.error('Error fetching AI chat history:', error)
+    } finally {
+      setLoadingHistory(false)
+    }
+  }
+
+  const handleSendAIQuestion = async (e) => {
+    if (e) e.preventDefault()
+    if (!aiQuestion.trim() || isAskingAI) return
+
+    const questionText = aiQuestion.trim()
+    setAiQuestion('')
+    
+    // Optimistic update
+    const tempUserMsg = { id: Date.now(), role: 'user', content: questionText, timestamp: new Date().toISOString() }
+    setAiChatHistory(prev => [...prev, tempUserMsg])
+    
+    try {
+      setIsAskingAI(true)
+      const response = await api.post(`/medical-reports/${reportId}/ask`, { question: questionText })
+      
+      if (response.data.success) {
+        // Replace temp message with real one and add AI response
+        setAiChatHistory(prev => {
+          const filtered = prev.filter(m => m.id !== tempUserMsg.id)
+          return [...filtered, response.data.question, response.data.answer]
+        })
+      } else {
+        toast.error(response.data.message || 'Failed to get AI answer')
+      }
+    } catch (error) {
+      console.error('Error asking AI:', error)
+      toast.error('Failed to communicate with AI')
+    } finally {
+      setIsAskingAI(false)
+    }
+  }
 
   const fetchReport = async () => {
     try {
@@ -902,7 +964,8 @@ export default function ReportDetail() {
             { id: 'vitals', label: 'Vitals', icon: Heart },
             { id: 'labs', label: 'Labs', icon: Activity },
             { id: 'medications', label: 'Medications', icon: Pill },
-            { id: 'suggestions', label: 'AI Insights', icon: Brain }
+            { id: 'suggestions', label: 'AI Insights', icon: Brain },
+            { id: 'ai-chat', label: 'Ask AI', icon: MessageSquare }
           ].map((tab) => {
             const Icon = tab.icon
             return (
@@ -2543,6 +2606,148 @@ export default function ReportDetail() {
                 </div>
               )}
             </>
+          )}
+          {activeTab === 'ai-chat' && (
+            <div className="flex flex-col h-[600px] bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm animate-fadeIn">
+              {/* Chat Header */}
+              <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Brain className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">Medical AI Assistant</h3>
+                    <p className="text-xs text-gray-500">Ask anything about this report</p>
+                  </div>
+                </div>
+                {loadingHistory && <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>}
+              </div>
+
+              {/* Messages Area */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                {aiChatHistory.length === 0 && !loadingHistory ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                    <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                      <MessageSquare className="w-8 h-8 text-blue-400" />
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">No messages yet</h4>
+                    <p className="text-sm text-gray-500 max-w-xs">
+                      Ask a question like "What does my hemoglobin level mean?" or "Explain the findings in simple terms."
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {aiChatHistory.map((msg, idx) => (
+                      <div
+                        key={msg.id || idx}
+                        className={`flex items-end gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        {msg.role === 'assistant' && (
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 shadow">
+                            <span className="text-white text-[10px] font-bold">AI</span>
+                          </div>
+                        )}
+                        <div className={`max-w-[78%] rounded-2xl px-4 py-3 shadow-sm ${
+                          msg.role === 'user'
+                            ? 'bg-blue-600 text-white rounded-br-none'
+                            : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'
+                        }`}>
+                          {msg.role === 'assistant' ? (
+                            <div className="text-sm leading-relaxed space-y-1">
+                              {msg.content.split('\n').map((line, li) => {
+                                const trimmed = line.trim();
+                                if (!trimmed) return <div key={li} className="h-1" />;
+                                const isBullet = /^[-*•]\s/.test(trimmed);
+                                const isNum   = /^\d+\.\s/.test(trimmed);
+                                const renderInline = (text) => {
+                                  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+                                  return parts.map((p, pi) =>
+                                    p.startsWith('**') && p.endsWith('**')
+                                      ? <strong key={pi} className="font-semibold text-gray-900">{p.slice(2,-2)}</strong>
+                                      : <span key={pi}>{p}</span>
+                                  );
+                                };
+                                if (isBullet) return (
+                                  <div key={li} className="flex items-start gap-2">
+                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
+                                    <span>{renderInline(trimmed.replace(/^[-*•]\s/, ''))}</span>
+                                  </div>
+                                );
+                                if (isNum) return (
+                                  <div key={li} className="flex items-start gap-2">
+                                    <span className="text-blue-500 font-semibold text-xs mt-0.5 shrink-0">{trimmed.match(/^\d+/)[0]}.</span>
+                                    <span>{renderInline(trimmed.replace(/^\d+\.\s/, ''))}</span>
+                                  </div>
+                                );
+                                return <p key={li}>{renderInline(trimmed)}</p>;
+                              })}
+                            </div>
+                          ) : (
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                          )}
+                          <p className={`text-[10px] mt-2 text-right ${
+                            msg.role === 'user' ? 'text-blue-100' : 'text-gray-400'
+                          }`}>
+                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                        {msg.role === 'user' && (
+                          <div className="w-7 h-7 rounded-full bg-blue-700 flex items-center justify-center shrink-0 shadow">
+                            <span className="text-white text-[10px] font-bold">You</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {isAskingAI && (
+                      <div className="flex justify-start">
+                        <div className="bg-gray-100 text-gray-800 rounded-2xl rounded-tl-none p-4 shadow-sm border border-gray-200">
+                          <div className="flex gap-1.5 items-center">
+                            <span className="text-xs text-gray-500 mr-2 font-medium italic">AI is thinking</span>
+                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <div ref={chatEndRef} />
+                  </>
+                )}
+              </div>
+
+              {/* Input Area */}
+              <form onSubmit={handleSendAIQuestion} className="p-4 border-t border-gray-100 bg-white shadow-inner">
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    value={aiQuestion}
+                    onChange={(e) => setAiQuestion(e.target.value)}
+                    placeholder={!report.extracted_text && report.status !== 'ANALYZED' ? "Analyze report first to enable chat..." : "Type your question here about this report..."}
+                    className="w-full pl-4 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:opacity-50"
+                    disabled={isAskingAI || (!report.extracted_text && report.status !== 'ANALYZED')}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!aiQuestion.trim() || isAskingAI || (!report.extracted_text && report.status !== 'ANALYZED')}
+                    className={`absolute right-2 p-2 rounded-lg transition-all ${
+                      !aiQuestion.trim() || isAskingAI || (!report.extracted_text && report.status !== 'ANALYZED')
+                        ? 'text-gray-300' 
+                        : 'text-blue-600 hover:bg-blue-50'
+                    }`}
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
+                </div>
+                {!report.extracted_text && report.status !== 'ANALYZED' && (
+                  <p className="text-[10px] text-center text-amber-600 mt-2 font-medium">
+                    ⚠️ AI Chat requires the report to be analyzed first.
+                  </p>
+                )}
+                <p className="text-[10px] text-center text-gray-400 mt-2">
+                  AI provides information based on your report. Always consult your doctor for official medical advice.
+                </p>
+              </form>
+            </div>
           )}
         </div>
 
