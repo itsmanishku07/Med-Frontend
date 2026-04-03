@@ -12,7 +12,9 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.48.2",
     "react-hot-toast": "^2.4.1",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^6.8.0",
+    "remark-gfm": "^4.0.1",
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {

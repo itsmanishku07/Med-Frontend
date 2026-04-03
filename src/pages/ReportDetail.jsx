@@ -9,6 +9,8 @@ import {
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import api from '../services/api'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 export default function ReportDetail() {
   const { reportId } = useParams()
@@ -18,6 +20,8 @@ export default function ReportDetail() {
   const [loading, setLoading] = useState(true)
   const [analyzing, setAnalyzing] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
+  const [showFileModal, setShowFileModal] = useState(false)
+  const [modalFileData, setModalFileData] = useState(null)
   const [showAnalysisModal, setShowAnalysisModal] = useState(false)
   const [analysisResults, setAnalysisResults] = useState(null)
   const [isPrinting, setIsPrinting] = useState(false)
@@ -147,6 +151,27 @@ export default function ReportDetail() {
       toast.error('Failed to analyze report', { id: 'ai-analysis' })
     } finally {
       setAnalyzing(false)
+    }
+  }
+
+  const handleViewOriginal = async () => {
+    try {
+      toast.loading('Fetching original report...', { id: `fetch-file-${reportId}` })
+      const response = await api.get(`/medical-reports/${reportId}/file`, {
+        responseType: 'blob'
+      })
+      
+      const file = new Blob([response.data], { type: response.headers['content-type'] || 'application/pdf' })
+      const fileURL = URL.createObjectURL(file)
+      // window.open(fileURL, '_blank')
+      
+      setModalFileData({ url: fileURL, type: response.headers['content-type'] || 'application/pdf', name: 'Original Report' })
+      setShowFileModal(true)
+      
+      toast.success('Original report loaded', { id: `fetch-file-${reportId}` })
+    } catch (error) {
+      console.error('Error fetching file:', error)
+      toast.error('Failed to open original file', { id: `fetch-file-${reportId}` })
     }
   }
 
@@ -391,6 +416,11 @@ export default function ReportDetail() {
   const safeStr = (val) => {
     if (val === null || val === undefined) return ''
     if (typeof val === 'object') {
+      // If it's a diagnosis object: {diagnosis: "...", description: "..."}
+      if (val.diagnosis) return String(val.diagnosis);
+      if (val.name) return String(val.name);
+      if (val.description) return String(val.description);
+      
       try {
         return JSON.stringify(val);
       } catch (e) {
@@ -813,6 +843,15 @@ export default function ReportDetail() {
                     )}
                   </button>
                 )}
+                
+                {/* View Original File */}
+                <button
+                  onClick={handleViewOriginal}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200 transition-colors"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  View Original
+                </button>
               </div>
             </div>
           </div>
@@ -1704,7 +1743,7 @@ export default function ReportDetail() {
                           <div className="flex flex-wrap gap-2">
                             {icd10Codes.map((code, index) => (
                               <span key={index} className="px-3 py-1 bg-blue-200 text-blue-900 rounded-md text-sm font-mono font-semibold border border-blue-300">
-                                {code}
+                                {safeStr(code)}
                               </span>
                             ))}
                           </div>
@@ -3265,7 +3304,11 @@ export default function ReportDetail() {
                       <Clipboard className="w-5 h-5 text-gray-600" />
                       <h3 className="font-bold text-gray-900 text-lg">Analysis Summary</h3>
                     </div>
-                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{analysisResults.summary}</p>
+                    <div className="text-sm text-gray-700 leading-relaxed max-w-none prose prose-sm">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {analysisResults.summary}
+                      </ReactMarkdown>
+                    </div>
                   </div>
                 )}
 
@@ -3467,6 +3510,58 @@ export default function ReportDetail() {
           <p>Medical Report Analysis Platform | Confidential Medical Document</p>
           <p className="mt-1">⚕️ This AI analysis is for clinical decision support only. Final medical decisions must be made by licensed healthcare professionals.</p>
         </div>
+        
+        {showFileModal && modalFileData && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary-50 rounded-lg">
+                    <FileText className="w-5 h-5 text-primary-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">{modalFileData.name}</h3>
+                    <p className="text-xs text-gray-500">{modalFileData.type}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={modalFileData.url}
+                    download="original_report"
+                    className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                    title="Download"
+                  >
+                    <Plus className="w-5 h-5 rotate-180" />
+                  </a>
+                  <button
+                    onClick={() => {
+                      setShowFileModal(false)
+                      URL.revokeObjectURL(modalFileData.url)
+                    }}
+                    className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 bg-gray-100 overflow-auto p-4 flex items-center justify-center">
+                {modalFileData.type.includes('pdf') ? (
+                  <iframe
+                    src={modalFileData.url}
+                    className="w-full h-full rounded-lg shadow-inner bg-white"
+                    title="PDF Viewer"
+                  />
+                ) : (
+                  <img
+                    src={modalFileData.url}
+                    alt="Original Report"
+                    className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

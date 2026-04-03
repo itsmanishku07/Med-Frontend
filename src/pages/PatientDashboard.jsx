@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/FirebaseAuthContext'
-import { Upload, FileText, Activity, MessageSquare, AlertCircle, CheckCircle, Clock, AlertTriangle, Info, ChevronRight, Trash2 } from 'lucide-react'
+import { Upload, FileText, Activity, MessageSquare, AlertCircle, CheckCircle, Clock, AlertTriangle, Info, ChevronRight, Trash2, X } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import api from '../services/api'
 import AnalysisProgressCard from '../components/AnalysisProgressCard'
@@ -18,6 +18,8 @@ export default function PatientDashboard() {
     reviewedReports: 0,
     criticalAlerts: 0
   })
+  const [showFileModal, setShowFileModal] = useState(false)
+  const [modalFileData, setModalFileData] = useState(null)
 
   const pollRef = useRef(null)
 
@@ -149,6 +151,27 @@ export default function PatientDashboard() {
       CRITICAL: 'bg-red-100 text-red-800 border-red-200'
     }
     return styles[severity] || styles.LOW
+  }
+
+  const handleViewOriginal = async (reportId) => {
+    try {
+      toast.loading('Fetching file...', { id: `fetch-file-${reportId}` })
+      const response = await api.get(`/medical-reports/${reportId}/file`, {
+        responseType: 'blob'
+      })
+      
+      const file = new Blob([response.data], { type: response.headers['content-type'] })
+      const fileURL = URL.createObjectURL(file)
+      // window.open(fileURL, '_blank')
+      
+      setModalFileData({ url: fileURL, type: response.headers['content-type'], name: 'Medical Report' })
+      setShowFileModal(true)
+      
+      toast.success('File loaded', { id: `fetch-file-${reportId}` })
+    } catch (error) {
+      console.error('Error fetching file:', error)
+      toast.error('Failed to open file', { id: `fetch-file-${reportId}` })
+    }
   }
 
   const getStatusIcon = (status) => {
@@ -325,11 +348,14 @@ export default function PatientDashboard() {
                           <div>
                             <span className="text-sm font-bold text-gray-700 block mb-1">Diagnoses: </span>
                             <div className="flex flex-wrap gap-2">
-                              {report.ai_analysis.diagnoses.map((diag, i) => (
-                                <span key={i} className="inline-block px-3 py-1 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 font-medium">
-                                  {diag}
-                                </span>
-                              ))}
+                              {report.ai_analysis.diagnoses.map((diag, i) => {
+                                const displayDiag = typeof diag === 'object' ? (diag.diagnosis || diag.name || JSON.stringify(diag)) : diag;
+                                return (
+                                  <span key={i} className="inline-block px-3 py-1 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 font-medium">
+                                    {displayDiag}
+                                  </span>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
@@ -367,6 +393,13 @@ export default function PatientDashboard() {
                     >
                       View Details
                       <ChevronRight className="w-4 h-4 ml-1.5 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                    </button>
+                    <button
+                      onClick={() => handleViewOriginal(report.id)}
+                      className="btn-outline w-full sm:w-auto lg:w-full flex items-center justify-center text-blue-600 border-blue-200 hover:bg-blue-50"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      View File
                     </button>
                     {report.assigned_doctor_id && (
                       <button
@@ -408,6 +441,58 @@ export default function PatientDashboard() {
           </p>
         </div>
       </div>
+
+      {showFileModal && modalFileData && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary-50 rounded-lg">
+                  <FileText className="w-5 h-5 text-primary-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">{modalFileData.name}</h3>
+                  <p className="text-xs text-gray-500">{modalFileData.type}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={modalFileData.url}
+                  download="medical_report"
+                  className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                  title="Download"
+                >
+                  <Upload className="w-5 h-5 rotate-180" />
+                </a>
+                <button
+                  onClick={() => {
+                    setShowFileModal(false)
+                    URL.revokeObjectURL(modalFileData.url)
+                  }}
+                  className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 bg-gray-100 overflow-auto p-4 flex items-center justify-center">
+              {modalFileData.type.includes('pdf') ? (
+                <iframe
+                  src={modalFileData.url}
+                  className="w-full h-full rounded-lg shadow-inner bg-white"
+                  title="PDF Viewer"
+                />
+              ) : (
+                <img
+                  src={modalFileData.url}
+                  alt="Medical Report"
+                  className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

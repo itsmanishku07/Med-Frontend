@@ -5,6 +5,8 @@ import { Send, ArrowLeft, FileText, User, Circle, Image as ImageIcon, X, Trash2 
 import { toast } from 'react-hot-toast'
 import socketService from '../services/socket'
 import api from '../services/api'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 
 export default function ChatRealtime() {
@@ -26,7 +28,7 @@ export default function ChatRealtime() {
 
   useEffect(() => {
     initializeChat()
-    
+
     return () => {
       if (chat?.id) {
         socketService.leaveChat(chat.id)
@@ -46,7 +48,7 @@ export default function ChatRealtime() {
   const initializeChat = async () => {
     try {
       setLoading(true)
-      
+
       const token = await getToken()
       if (!token) {
         toast.error('Authentication required')
@@ -61,7 +63,7 @@ export default function ChatRealtime() {
       if (response.data.success) {
         const chatData = response.data.chat
         const messagesData = response.data.messages || []
-        
+
         setChat(chatData)
         const sortedMessages = messagesData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
         setMessages(sortedMessages)
@@ -80,7 +82,7 @@ export default function ChatRealtime() {
             const updated = [...prev, message]
             return updated.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
           })
-          
+
           if (message.sender_id !== userProfile?.id) {
             socketService.markAsRead(chatData.id)
           }
@@ -89,7 +91,7 @@ export default function ChatRealtime() {
         socketService.onUserTyping((data) => {
           if (data.user_id !== userProfile?.id) {
             setTyping(data.is_typing ? data.user_name : null)
-            
+
             if (data.is_typing) {
               setTimeout(() => setTyping(null), 3000)
             }
@@ -156,17 +158,17 @@ export default function ChatRealtime() {
 
   const handleSendMessage = async (e) => {
     e.preventDefault()
-    
+
     if ((!newMessage.trim() && !selectedImage) || sending || !chat) return
 
     try {
       setSending(true)
-      
+
       const messageText = newMessage.trim()
       const tempId = Date.now() // Temporary ID for optimistic update
-      
+
       const messageType = selectedImage ? 'IMAGE' : 'TEXT'
-      
+
       const optimisticMessage = {
         id: tempId,
         chat_id: chat.id,
@@ -180,22 +182,22 @@ export default function ChatRealtime() {
         timestamp: new Date().toISOString(),
         read: false
       }
-      
+
       setMessages(prev => [...prev, optimisticMessage])
-      
+
       setNewMessage('')
       handleRemoveImage()
-      
+
       socketService.sendTyping(chat.id, false)
-      
+
       socketService.sendMessage(
-        chat.id, 
+        chat.id,
         messageText || null,
         messageType,
         selectedImage?.data || null,
         selectedImage?.name || null
       )
-      
+
     } catch (error) {
       console.error('Error sending message:', error)
       toast.error('Failed to send message')
@@ -206,7 +208,7 @@ export default function ChatRealtime() {
 
   const handleTyping = (e) => {
     setNewMessage(e.target.value)
-    
+
     if (!chat) return
 
     socketService.sendTyping(chat.id, true)
@@ -263,7 +265,7 @@ export default function ChatRealtime() {
     if (!window.confirm("Are you sure you want to delete this conversation? This cannot be undone.")) {
       return
     }
-    
+
     try {
       const response = await api.delete(`/chats/${chat.id}`)
       if (response.data.success) {
@@ -309,7 +311,7 @@ export default function ChatRealtime() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 pt-24">
-      {}
+      { }
       <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
@@ -360,18 +362,18 @@ export default function ChatRealtime() {
         </div>
       </div>
 
-      {}
+      { }
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
         {Object.entries(messageGroups).map(([date, msgs]) => (
           <div key={date}>
-            {}
+            { }
             <div className="flex items-center justify-center mb-4">
               <div className="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">
                 {date}
               </div>
             </div>
 
-            {}
+            { }
             <div className="space-y-3">
               {msgs.map((message, index) => {
                 const isOwn = message.sender_id === userProfile?.id
@@ -394,11 +396,10 @@ export default function ChatRealtime() {
                         </span>
                       )}
                       <div
-                        className={`px-4 py-2 rounded-2xl ${
-                          isOwn
-                            ? 'bg-blue-600 text-white rounded-br-sm'
-                            : 'bg-white text-gray-900 border border-gray-200 rounded-bl-sm'
-                        }`}
+                        className={`px-4 py-2 rounded-2xl ${isOwn
+                          ? 'bg-blue-600 text-white rounded-br-sm'
+                          : 'bg-white text-gray-900 border border-gray-200 rounded-bl-sm'
+                          }`}
                       >
                         {message.message_type === 'IMAGE' && message.image_data && (
                           <div className="mb-2">
@@ -411,9 +412,11 @@ export default function ChatRealtime() {
                           </div>
                         )}
                         {message.content && (
-                          <p className="text-sm whitespace-pre-wrap break-words">
-                            {message.content}
-                          </p>
+                          <div className="text-sm prose prose-sm max-w-none dark:prose-invert">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {message.content}
+                            </ReactMarkdown>
+                          </div>
                         )}
                       </div>
                       <span className="text-xs text-gray-400 mt-1 px-3">
@@ -429,7 +432,7 @@ export default function ChatRealtime() {
           </div>
         ))}
 
-        {}
+        { }
         {typing && (
           <div className="flex items-center gap-2">
             <User className="w-8 h-8 text-gray-400 bg-gray-200 rounded-full p-1.5" />
@@ -446,9 +449,9 @@ export default function ChatRealtime() {
         <div ref={messagesEndRef} />
       </div>
 
-      {}
+      { }
       <div className="bg-white border-t border-gray-200 px-4 py-3">
-        {}
+        { }
         {imagePreview && (
           <div className="mb-3 relative inline-block">
             <img

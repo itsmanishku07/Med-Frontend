@@ -355,7 +355,9 @@ export default function DoctorDashboard() {
                             <div className="flex items-start gap-2">
                               <span className="text-sm font-semibold text-gray-600 w-24 shrink-0">Diagnoses:</span>
                               <span className="text-sm text-gray-800 font-medium">
-                                {assignment.ai_analysis.diagnoses.slice(0, 3).join(', ')}
+                                {assignment.ai_analysis.diagnoses.slice(0, 3).map(d => 
+                                  typeof d === 'object' ? (d.diagnosis || d.name || 'Condition') : d
+                                ).join(', ')}
                                 {assignment.ai_analysis.diagnoses.length > 3 && '...'}
                               </span>
                             </div>
