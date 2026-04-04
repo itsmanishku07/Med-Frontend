@@ -1053,7 +1053,7 @@ export default function ReportDetail() {
             { id: 'medications', label: 'Medications', icon: Pill },
             { id: 'suggestions', label: 'AI Insights', icon: Brain },
             { id: 'ai-chat', label: 'Ask AI', icon: MessageSquare }
-          ].map((tab) => {
+          ].filter(tab => tab.id !== 'ai-chat' || !isDoctor).map((tab) => {
             const Icon = tab.icon
             return (
               <button
@@ -2694,7 +2694,7 @@ export default function ReportDetail() {
               )}
             </>
           )}
-          {activeTab === 'ai-chat' && (
+          {activeTab === 'ai-chat' && (isPatient || !isDoctor) && (
             <div className="flex flex-col h-[600px] bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm animate-fadeIn">
               <style>{`
                 .markdown-container h1 { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.5rem; margin-top: 1rem; }
