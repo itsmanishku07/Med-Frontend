@@ -101,6 +101,23 @@ export default function ReportDetail() {
     }
   }
 
+  const handleClearAIChat = async () => {
+    if (!window.confirm('Are you sure you want to clear the AI chat history? This cannot be undone.')) return
+    
+    try {
+      const response = await api.delete(`/medical-reports/${reportId}/ai-chat`)
+      if (response.data.success) {
+        setAiChatHistory([])
+        toast.success('Chat history cleared')
+      } else {
+        toast.error(response.data.message || 'Failed to clear chat history')
+      }
+    } catch (error) {
+      console.error('Error clearing AI chat history:', error)
+      toast.error('Failed to clear chat history')
+    }
+  }
+
   const fetchReport = async () => {
     try {
       const response = await api.get(`/medical-reports/${reportId}`)
@@ -752,66 +769,74 @@ export default function ReportDetail() {
         {/* Back button */}
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors group"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 mb-6 bg-blue-50/50 px-3 py-1.5 rounded-lg transition-all group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-          Back
+          Back to Dashboard
         </button>
 
         {/* ── Report Header Card ── */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4 print:border-gray-300">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6 mb-6 print:border-gray-400">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
 
-            {/* Left: icon + title */}
-            <div className="flex items-start gap-3 min-w-0">
-              <div className="w-10 h-10 shrink-0 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow">
-                <FileText className="w-5 h-5" />
+            {/* Left: icon + title + metadata */}
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 min-w-0">
+              <div className="w-14 h-14 shrink-0 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                <FileText className="w-7 h-7" />
               </div>
-              <div className="min-w-0">
-                <h1 className="text-base sm:text-lg font-semibold text-gray-900 leading-tight">Medical Report Analysis</h1>
-                <p className="text-sm text-gray-500 truncate">{report.file_name}</p>
-                <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-gray-400">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
+              <div className="text-center sm:text-left min-w-0 flex-1">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
+                  <h1 className="text-lg sm:text-2xl font-extrabold text-gray-900 leading-tight">Medical Report Analysis</h1>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${report.status === 'ANALYZED' ? 'bg-green-100 text-green-700 border border-green-200' :
+                      report.status === 'REVIEWING' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                        'bg-gray-100 text-gray-600 border border-gray-200'
+                    }`}>{report.status}</span>
+                </div>
+                <p className="text-sm sm:text-base font-medium text-gray-600 truncate mb-3">{report.file_name}</p>
+                
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs font-medium text-gray-500">
+                  <span className="flex items-center gap-1.5 whitespace-nowrap bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
+                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
                     {new Date(report.uploaded_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <Activity className="w-3 h-3" />
+                  <span className="flex items-center gap-1.5 whitespace-nowrap bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
+                    <Activity className="w-3.5 h-3.5 text-gray-400" />
                     {report.file_type?.toUpperCase()}
                   </span>
-                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide ${report.status === 'ANALYZED' ? 'bg-green-50 text-green-700 ring-1 ring-green-200' :
-                      report.status === 'REVIEWING' ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200' :
-                        'bg-gray-100 text-gray-600'
-                    }`}>{report.status}</span>
                 </div>
               </div>
             </div>
 
-            {/* Right: badges + actions */}
-            <div className="flex flex-row sm:flex-col items-start sm:items-end gap-2 flex-wrap">
-              <div className="flex items-center gap-2 flex-wrap">
+            {/* Right: clinical badges + major actions */}
+            <div className="flex flex-col items-center sm:items-start lg:items-end gap-4 min-w-[200px]">
+              {/* Clinical Status Badges Row */}
+              <div className="flex flex-wrap items-center justify-center sm:justify-start lg:justify-end gap-2">
                 {aiAnalysis.severity_level && (
-                  <span className={`px-2 py-1 rounded text-xs font-semibold flex items-center gap-1 ${getSeverityColor(aiAnalysis.severity_level)}`}>
-                    <span>{getSeverityIcon(aiAnalysis.severity_level)}</span>
-                    {aiAnalysis.severity_level}
-                  </span>
+                  <div className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm border ${getSeverityColor(aiAnalysis.severity_level)}`}>
+                    <span className="text-sm">{getSeverityIcon(aiAnalysis.severity_level)}</span>
+                    <span className="uppercase tracking-tight">{aiAnalysis.severity_level}</span>
+                  </div>
                 )}
                 {Object.keys(aiAnalysis).length > 0 && (
-                  <span className={`px-2 py-1 rounded text-xs font-semibold ${dataCompleteness.quality === 'excellent' ? 'bg-green-50 text-green-700' :
-                      dataCompleteness.quality === 'good' ? 'bg-blue-50 text-blue-700' :
-                        dataCompleteness.quality === 'fair' ? 'bg-amber-50 text-amber-700' :
-                          'bg-red-50 text-red-700'
-                    }`}>{dataCompleteness.overall}% complete</span>
+                  <div className={`px-2.5 py-1.5 rounded-lg text-xs font-bold shadow-sm border ${dataCompleteness.quality === 'excellent' ? 'bg-green-50 text-green-700 border-green-200' :
+                      dataCompleteness.quality === 'good' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                        dataCompleteness.quality === 'fair' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                          'bg-red-50 text-red-700 border-red-200'
+                    }`}>
+                    DATA: {dataCompleteness.overall}%
+                  </div>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 flex-wrap print:hidden">
+
+              {/* Action Buttons Row */}
+              <div className="flex flex-wrap items-center justify-center sm:justify-start lg:justify-end gap-2 w-full sm:w-auto print:hidden">
                 {/* Patient / Admin only: delete */}
                 {!isDoctor && (userProfile?.id === report?.patient_id || userProfile?.role === 'ADMIN') && (
                   <button
                     onClick={handleDeleteReport}
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors"
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-all hover:scale-[1.02] active:scale-95"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-4 h-4" />
                     Delete
                   </button>
                 )}
@@ -819,10 +844,10 @@ export default function ReportDetail() {
                 {report.assigned_doctor_id && (
                   <button
                     onClick={() => navigate(`/chat/${reportId}`)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-white bg-violet-500 hover:bg-violet-600 transition-colors"
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-95"
                   >
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    Chat
+                    <MessageSquare className="w-4 h-4" />
+                    Doctor Chat
                   </button>
                 )}
                 {/* AI Analyze — patient/admin only */}
@@ -830,16 +855,18 @@ export default function ReportDetail() {
                   <button
                     onClick={triggerAIAnalysis}
                     disabled={analyzing}
-                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${analyzing ? 'bg-gray-200 text-gray-400 cursor-not-allowed' :
-                        !aiAnalysis || Object.keys(aiAnalysis).length === 0
-                          ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
-                          : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200'
-                      }`}
+                    className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold shadow-md transition-all hover:scale-[1.02] active:scale-95 ${
+                      analyzing 
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' 
+                        : (!aiAnalysis || Object.keys(aiAnalysis).length === 0)
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-500/20'
+                          : 'bg-white text-blue-600 border border-blue-200 hover:bg-blue-50'
+                    }`}
                   >
                     {analyzing ? (
-                      <><div className="animate-spin rounded-full h-3 w-3 border border-white border-t-transparent" />Analyzing...</>
+                      <><div className="animate-spin rounded-full h-3 w-3 border-2 border-gray-300 border-t-transparent" />Analyzing...</>
                     ) : (
-                      <><Brain className="w-3.5 h-3.5" />{!aiAnalysis || Object.keys(aiAnalysis).length === 0 ? 'Analyze with AI' : 'Re-analyze'}</>
+                      <><Brain className="w-4 h-4" />{!aiAnalysis || Object.keys(aiAnalysis).length === 0 ? 'Analyze with AI' : 'Re-analyze'}</>
                     )}
                   </button>
                 )}
@@ -2648,6 +2675,21 @@ export default function ReportDetail() {
           )}
           {activeTab === 'ai-chat' && (
             <div className="flex flex-col h-[600px] bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm animate-fadeIn">
+              <style>{`
+                .markdown-container h1 { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.5rem; margin-top: 1rem; }
+                .markdown-container h2 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; margin-top: 0.75rem; }
+                .markdown-container h3 { font-size: 0.875rem; font-weight: 700; margin-bottom: 0.25rem; margin-top: 0.5rem; }
+                .markdown-container p { margin-bottom: 0.5rem; }
+                .markdown-container p:last-child { margin-bottom: 0; }
+                .markdown-container ul { list-style-type: disc; margin-left: 1rem; margin-bottom: 0.5rem; }
+                .markdown-container ol { list-style-type: decimal; margin-left: 1rem; margin-bottom: 0.5rem; }
+                .markdown-container li { margin-bottom: 0.25rem; }
+                .markdown-container table { width: 100%; border-collapse: collapse; border: 1px solid #e5e7eb; margin: 1rem 0; font-size: 0.75rem; }
+                .markdown-container th { background-color: #f9fafb; border: 1px solid #e5e7eb; padding: 0.5rem 0.75rem; text-align: left; font-weight: 700; }
+                .markdown-container td { border: 1px solid #e5e7eb; padding: 0.5rem 0.75rem; }
+                .markdown-container strong { font-weight: 700; color: #111827; }
+                .markdown-container blockquote { border-left: 4px solid #e5e7eb; padding-left: 0.75rem; font-style: italic; margin: 0.5rem 0; color: #4b5563; }
+              `}</style>
               {/* Chat Header */}
               <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -2659,7 +2701,17 @@ export default function ReportDetail() {
                     <p className="text-xs text-gray-500">Ask anything about this report</p>
                   </div>
                 </div>
-                {loadingHistory && <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>}
+                <div className="flex items-center gap-2">
+                  {loadingHistory && <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>}
+                  <button
+                    onClick={handleClearAIChat}
+                    disabled={aiChatHistory.length === 0 || isAskingAI}
+                    className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30"
+                    title="Clear Chat History"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               {/* Messages Area */}
@@ -2692,34 +2744,10 @@ export default function ReportDetail() {
                             : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'
                         }`}>
                           {msg.role === 'assistant' ? (
-                            <div className="text-sm leading-relaxed space-y-1">
-                              {msg.content.split('\n').map((line, li) => {
-                                const trimmed = line.trim();
-                                if (!trimmed) return <div key={li} className="h-1" />;
-                                const isBullet = /^[-*•]\s/.test(trimmed);
-                                const isNum   = /^\d+\.\s/.test(trimmed);
-                                const renderInline = (text) => {
-                                  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-                                  return parts.map((p, pi) =>
-                                    p.startsWith('**') && p.endsWith('**')
-                                      ? <strong key={pi} className="font-semibold text-gray-900">{p.slice(2,-2)}</strong>
-                                      : <span key={pi}>{p}</span>
-                                  );
-                                };
-                                if (isBullet) return (
-                                  <div key={li} className="flex items-start gap-2">
-                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-                                    <span>{renderInline(trimmed.replace(/^[-*•]\s/, ''))}</span>
-                                  </div>
-                                );
-                                if (isNum) return (
-                                  <div key={li} className="flex items-start gap-2">
-                                    <span className="text-blue-500 font-semibold text-xs mt-0.5 shrink-0">{trimmed.match(/^\d+/)[0]}.</span>
-                                    <span>{renderInline(trimmed.replace(/^\d+\.\s/, ''))}</span>
-                                  </div>
-                                );
-                                return <p key={li}>{renderInline(trimmed)}</p>;
-                              })}
+                            <div className="text-sm leading-relaxed markdown-container">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {msg.content}
+                              </ReactMarkdown>
                             </div>
                           ) : (
                             <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>

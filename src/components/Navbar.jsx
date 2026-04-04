@@ -102,7 +102,7 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center justify-center space-x-2 absolute left-1/2 -translate-x-1/2">
+          <div className="hidden lg:flex items-center space-x-1 flex-1 justify-center px-4">
             {navItems.filter(item => item.show).map((item) => {
               const Icon = item.icon
               const active = isActivePath(item.path)
@@ -110,7 +110,7 @@ const Navbar = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 relative group overflow-hidden ${
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-xl transition-all duration-300 relative group overflow-hidden whitespace-nowrap ${
                     active
                       ? 'text-primary-700 font-semibold bg-primary-50/80 shadow-sm'
                       : 'text-gray-600 hover:text-primary-600 hover:bg-primary-50/50'
@@ -124,10 +124,10 @@ const Navbar = () => {
           </div>
 
           {/* Right Side Actions Desktop */}
-          <div className="hidden md:flex items-center space-x-4 z-10">
+          <div className="hidden md:flex items-center space-x-3 z-10">
             {isAuthenticated ? (
               <>
-                <div className="mr-2">
+                <div className="hidden sm:block">
                   <NotificationBell />
                 </div>
 
@@ -193,19 +193,22 @@ const Navbar = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 rounded-xl text-gray-600 hover:bg-gray-100 transition-colors relative z-10"
+            className="lg:hidden p-2 rounded-xl text-gray-600 hover:bg-gray-100 transition-colors relative z-10"
           >
             {isMobileMenuOpen ? (
-              <X className="w-6 h-6" />
+              <X className="w-6 h-6 text-primary-600" />
             ) : (
-              <Menu className="w-6 h-6" />
+              <div className="flex items-center space-x-2">
+                {!isAuthenticated && <span className="text-xs font-semibold text-primary-600 mr-1">Menu</span>}
+                <Menu className="w-6 h-6" />
+              </div>
             )}
           </button>
         </div>
 
         {/* Mobile Menu Overlay */}
-        <div className={`md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-glass transition-all duration-300 origin-top overflow-hidden ${
-          isMobileMenuOpen ? 'max-h-[500px] opacity-100 visible py-4' : 'max-h-0 opacity-0 invisible py-0'
+        <div className={`lg:hidden absolute top-full left-0 w-full bg-white shadow-2xl border-b border-gray-100 transition-all duration-300 origin-top overflow-hidden z-40 ${
+          isMobileMenuOpen ? 'max-h-[600px] opacity-100 visible py-6' : 'max-h-0 opacity-0 invisible py-0'
         }`}>
           <div className="px-4 space-y-1 pb-4">
             {isAuthenticated ? (
