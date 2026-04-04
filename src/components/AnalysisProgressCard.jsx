@@ -2,10 +2,10 @@ import { useState, useEffect, useRef } from 'react'
 import { Brain, FileSearch, UserCheck, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 
 const STAGES = [
-  { id: 'reading',  label: 'Reading document',       icon: FileSearch, weight: 10 },
-  { id: 'ocr',      label: 'Extracting text (OCR)',   icon: FileSearch, weight: 30 },
-  { id: 'ai',       label: 'AI medical analysis',     icon: Brain,      weight: 45 },
-  { id: 'matching', label: 'Matching specialist',     icon: UserCheck,  weight: 15 },
+  { id: 'reading', label: 'Reading document', icon: FileSearch, weight: 10 },
+  { id: 'ocr', label: 'Extracting text (OCR)', icon: FileSearch, weight: 30 },
+  { id: 'ai', label: 'AI medical analysis', icon: Brain, weight: 45 },
+  { id: 'matching', label: 'Matching specialist', icon: UserCheck, weight: 15 },
 ]
 
 // Cumulative % at end of each stage
@@ -14,9 +14,9 @@ const STAGE_ENDS = STAGES.reduce((acc, s, i) => {
   return acc
 }, [])
 
-const TOTAL_MS  = 30_000   // expected total backend duration
-const STALL_AT  = 90       // hold here until real ANALYZED arrives
-const TICK_MS   = 400
+const TOTAL_MS = 30_000   // expected total backend duration
+const STALL_AT = 90       // hold here until real ANALYZED arrives
+const TICK_MS = 400
 
 const calcProgress = (elapsedMs) =>
   Math.min(Math.round((elapsedMs / TOTAL_MS) * 100 * 10) / 10, STALL_AT)
@@ -37,10 +37,10 @@ export default function AnalysisProgressCard({ status, uploadedAt }) {
   const getElapsed = () =>
     uploadedAt ? Date.now() - new Date(uploadedAt).getTime() : 0
 
-  const [progress, setProgress]   = useState(() => calcProgress(getElapsed()))
-  const [stageIdx, setStageIdx]   = useState(() => calcStage(calcProgress(getElapsed())))
-  const [done, setDone]           = useState(status === 'ANALYZED')
-  const [failed, setFailed]       = useState(status === 'FAILED')
+  const [progress, setProgress] = useState(() => calcProgress(getElapsed()))
+  const [stageIdx, setStageIdx] = useState(() => calcStage(calcProgress(getElapsed())))
+  const [done, setDone] = useState(status === 'ANALYZED')
+  const [failed, setFailed] = useState(status === 'FAILED')
   const timerRef = useRef(null)
 
   useEffect(() => {
@@ -155,26 +155,24 @@ export default function AnalysisProgressCard({ status, uploadedAt }) {
         {STAGES.map((s, i) => {
           const SIcon = s.icon
           const isActive = i === stageIdx && !isStalled
-          const isDone   = i < stageIdx || progress >= 100
+          const isDone = i < stageIdx || progress >= 100
           return (
             <div key={s.id} className="flex flex-col items-center gap-1 flex-1">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ${
-                isDone
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ${isDone
                   ? 'bg-blue-500 text-white'
                   : isActive
-                  ? 'bg-blue-100 text-blue-600 ring-2 ring-blue-400 ring-offset-1'
-                  : 'bg-gray-100 text-gray-400'
-              }`}>
+                    ? 'bg-blue-100 text-blue-600 ring-2 ring-blue-400 ring-offset-1'
+                    : 'bg-gray-100 text-gray-400'
+                }`}>
                 {isDone
                   ? <CheckCircle className="w-3.5 h-3.5" />
                   : <SIcon className={`w-3 h-3 ${isActive ? 'animate-pulse' : ''}`} />
                 }
               </div>
-              <span className={`text-[10px] text-center leading-tight hidden sm:block ${
-                isActive ? 'text-blue-700 font-semibold'
-                : isDone  ? 'text-blue-500'
-                : 'text-gray-400'
-              }`}>
+              <span className={`text-[10px] text-center leading-tight hidden sm:block ${isActive ? 'text-blue-700 font-semibold'
+                  : isDone ? 'text-blue-500'
+                    : 'text-gray-400'
+                }`}>
                 {s.label.split(' ').slice(0, 2).join(' ')}
               </span>
             </div>
@@ -182,10 +180,7 @@ export default function AnalysisProgressCard({ status, uploadedAt }) {
         })}
       </div>
 
-      {/* OCR info note */}
-      <p className="text-[10px] text-blue-400 text-right">
-        Using: pdfplumber · EasyOCR · Tesseract
-      </p>
+
 
       <style>{`
         @keyframes shimmer {

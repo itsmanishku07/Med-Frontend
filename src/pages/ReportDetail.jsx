@@ -5,7 +5,7 @@ import {
   ArrowLeft, FileText, User, Calendar, Activity, AlertTriangle,
   Heart, Thermometer, Droplet, Wind, CheckCircle, XCircle,
   Pill, Clipboard, TrendingUp, Brain, Stethoscope, Info, Printer, MessageSquare,
-  Edit3, Save, X, Plus, Trash2, ChevronDown, ChevronUp, Send
+  Edit3, Save, X, Plus, Trash2, ChevronDown, ChevronUp, Send, Mic, MicOff
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import api from '../services/api'
@@ -38,11 +38,32 @@ export default function ReportDetail() {
   const [aiChatHistory, setAiChatHistory] = useState([])
   const [aiQuestion, setAiQuestion] = useState('')
   const [isAskingAI, setIsAskingAI] = useState(false)
+  const [isListening, setIsListening] = useState(false)
   const [loadingHistory, setLoadingHistory] = useState(false)
+  const recognitionRef = useRef(null)
 
   useEffect(() => {
     fetchReport()
     fetchAIChatHistory()
+
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+      recognitionRef.current = new SpeechRecognition()
+      recognitionRef.current.continuous = false
+      recognitionRef.current.interimResults = false
+      recognitionRef.current.lang = 'en-US'
+
+      recognitionRef.current.onstart = () => setIsListening(true)
+      recognitionRef.current.onend = () => setIsListening(false)
+      recognitionRef.current.onresult = (event) => {
+        const transcript = event.results[0][0].transcript
+        setAiQuestion(prev => prev + ' ' + transcript)
+      }
+    }
+
+    return () => {
+      if (recognitionRef.current) recognitionRef.current.stop()
+    }
   }, [reportId])
 
   useEffect(() => {
@@ -2784,26 +2805,68 @@ export default function ReportDetail() {
 
               {/* Input Area */}
               <form onSubmit={handleSendAIQuestion} className="p-4 border-t border-gray-100 bg-white shadow-inner">
-                <div className="relative flex items-center">
-                  <input
-                    type="text"
-                    value={aiQuestion}
-                    onChange={(e) => setAiQuestion(e.target.value)}
-                    placeholder={!report.extracted_text && report.status !== 'ANALYZED' ? "Analyze report first to enable chat..." : "Type your question here about this report..."}
-                    className="w-full pl-4 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:opacity-50"
-                    disabled={isAskingAI || (!report.extracted_text && report.status !== 'ANALYZED')}
-                  />
-                  <button
-                    type="submit"
-                    disabled={!aiQuestion.trim() || isAskingAI || (!report.extracted_text && report.status !== 'ANALYZED')}
-                    className={`absolute right-2 p-2 rounded-lg transition-all ${
-                      !aiQuestion.trim() || isAskingAI || (!report.extracted_text && report.status !== 'ANALYZED')
-                        ? 'text-gray-300' 
-                        : 'text-blue-600 hover:bg-blue-50'
-                    }`}
-                  >
-                    <Send className="w-5 h-5" />
-                  </button>
+                <div className="relative flex items-center gap-2">
+                  <div className="relative flex-1 flex items-center">
+                    <input
+                      type="text"
+                      value={aiQuestion}
+                      onChange={(e) => setAiQuestion(e.target.value)}
+                      placeholder={!report.extracted_text && report.status !== 'ANALYZED' ? "Analyze report first to enable chat..." : (isListening ? "Listening..." : "Type your question here about this report...")}
+                      className={`w-full pl-4 ${isListening ? 'pr-20' : 'pr-12'} py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:opacity-50 ${isListening ? 'ring-2 ring-red-400 border-red-400' : ''}`}
+                      disabled={isAskingAI || (!report.extracted_text && report.status !== 'ANALYZED')}
+                    />
+                    <div className="absolute right-2 flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isListening) {
+                            window._recognition?.stop();
+                            return;
+                          }
+                          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                          if (!SpeechRecognition) {
+                            toast.error("Speech recognition not supported in this browser.");
+                            return;
+                          }
+                          const recognition = new SpeechRecognition();
+                          recognition.continuous = false;
+                          recognition.interimResults = true;
+                          
+                          recognition.onstart = () => setIsListening(true);
+                          recognition.onend = () => setIsListening(false);
+                          recognition.onerror = () => setIsListening(false);
+                          recognition.onresult = (event) => {
+                            const transcript = Array.from(event.results)
+                              .map(result => result[0])
+                              .map(result => result.transcript)
+                              .join('');
+                            setAiQuestion(transcript);
+                          };
+                          
+                          window._recognition = recognition;
+                          recognition.start();
+                        }}
+                        disabled={isAskingAI || (!report.extracted_text && report.status !== 'ANALYZED')}
+                        className={`p-2 rounded-lg transition-all ${
+                          isListening ? 'text-red-600 bg-red-50 animate-pulse' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'
+                        }`}
+                        title={isListening ? "Stop Listening" : "Start Voice Input"}
+                      >
+                        {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={!aiQuestion.trim() || isAskingAI || (!report.extracted_text && report.status !== 'ANALYZED')}
+                        className={`p-2 rounded-lg transition-all ${
+                          !aiQuestion.trim() || isAskingAI || (!report.extracted_text && report.status !== 'ANALYZED')
+                            ? 'text-gray-300' 
+                            : 'text-blue-600 hover:bg-blue-50'
+                        }`}
+                      >
+                        <Send className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 {!report.extracted_text && report.status !== 'ANALYZED' && (
                   <p className="text-[10px] text-center text-amber-600 mt-2 font-medium">
