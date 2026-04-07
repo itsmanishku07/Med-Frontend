@@ -14,6 +14,8 @@ function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const dropdownRef = useRef(null)
+  const lastFetchRef = useRef(0)
+  const CACHE_DURATION = 60000 // Cache for 1 minute
 
   useEffect(() => {
     console.log('🔔 NotificationBell useEffect - isAuthenticated:', isAuthenticated)
@@ -22,7 +24,8 @@ function NotificationBell() {
       loadNotifications()
       setupWebSocket()
       
-      const interval = setInterval(loadNotifications, 30000)
+      // Increased polling interval to 2 minutes to reduce requests
+      const interval = setInterval(loadNotifications, 120000)
       return () => {
         clearInterval(interval)
         socketService.off('new_notification')
@@ -55,6 +58,8 @@ function NotificationBell() {
           }
         })
         
+        // Force refresh on new notification
+        lastFetchRef.current = 0
         loadNotifications()
       })
     } catch (error) {
@@ -73,22 +78,33 @@ function NotificationBell() {
   }, [])
 
   const loadNotifications = async () => {
+    // Implement caching to prevent too many requests
+    const now = Date.now()
+    if (now - lastFetchRef.current < CACHE_DURATION) {
+      console.log('🔔 Using cached notifications')
+      return
+    }
+
     try {
-      const response = await api.get('/notifications')
+      // Single API call that returns both notifications and unread count
+      const response = await api.get('/notifications', {
+        params: { limit: 20 }
+      })
       
       if (response.data.success) {
         const notifs = response.data.notifications || []
         setNotifications(notifs)
         
-        const countResponse = await api.get('/notifications/unread-count')
+        // Calculate unread count from notifications instead of separate API call
+        const count = notifs.filter(n => !n.is_read).length
+        setUnreadCount(count)
         
-        if (countResponse.data.success) {
-          const count = countResponse.data.count || 0
-          setUnreadCount(count)
-        }
+        lastFetchRef.current = now
       }
     } catch (error) {
       console.error('Failed to load notifications:', error)
+      // Don't retry immediately on error to avoid hammering the server
+      lastFetchRef.current = now
     }
   }
 
