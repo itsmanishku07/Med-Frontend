@@ -23,7 +23,7 @@ const SystemLogs = () => {
   const [pagination, setPagination] = useState({})
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const [logSettings, setLogSettings] = useState({ enabled: false })
+  const [logSettings, setLogSettings] = useState({ enabled: false, console_enabled: true })
   const [savingSettings, setSavingSettings] = useState(false)
   const [filters, setFilters] = useState({
     hours: 24,
@@ -137,16 +137,24 @@ const SystemLogs = () => {
     loadLogs()
   }
 
-  const handleToggleLogging = async (enabled) => {
+  const handleToggleLogging = async (fileEnabled, consoleEnabled) => {
     setSavingSettings(true)
     try {
-      const response = await api.put('/logs/settings', { enabled })
+      const updates = {}
+      if (fileEnabled !== logSettings.enabled) {
+        updates.enabled = fileEnabled
+      }
+      if (consoleEnabled !== logSettings.console_enabled) {
+        updates.console_enabled = consoleEnabled
+      }
+      
+      const response = await api.put('/logs/settings', updates)
       if (response.data.success) {
         setLogSettings(response.data.settings)
         toast.success(response.data.message)
         setShowSettings(false)
-        // Reload data if logging was enabled
-        if (enabled) {
+        // Reload data if file logging was enabled
+        if (fileEnabled && !logSettings.enabled) {
           loadStatistics()
           loadLogs()
         }
@@ -268,7 +276,7 @@ const SystemLogs = () => {
                     </p>
                   </div>
                   <button
-                    onClick={() => handleToggleLogging(!logSettings.enabled)}
+                    onClick={() => handleToggleLogging(!logSettings.enabled, logSettings.console_enabled)}
                     disabled={savingSettings}
                     className={`ml-4 relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
                       logSettings.enabled ? 'bg-primary-600' : 'bg-gray-200'
@@ -277,6 +285,28 @@ const SystemLogs = () => {
                     <span
                       className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
                         logSettings.enabled ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-gray-900 text-sm sm:text-base">Enable Console Logging</h4>
+                    <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                      Print logs to console (requires server restart)
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleToggleLogging(logSettings.enabled, !logSettings.console_enabled)}
+                    disabled={savingSettings}
+                    className={`ml-4 relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                      logSettings.console_enabled ? 'bg-primary-600' : 'bg-gray-200'
+                    } ${savingSettings ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        logSettings.console_enabled ? 'translate-x-5' : 'translate-x-0'
                       }`}
                     />
                   </button>
