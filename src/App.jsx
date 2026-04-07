@@ -27,6 +27,7 @@ const DoctorProfile = lazy(() => import('./pages/DoctorProfile'))
 const MyAppointments = lazy(() => import('./pages/MyAppointments'))
 const DoctorAppointments = lazy(() => import('./pages/DoctorAppointments'))
 const DoctorAvailability = lazy(() => import('./pages/DoctorAvailability'))
+const SystemLogs = lazy(() => import('./pages/SystemLogs'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 function App() {
@@ -136,6 +137,12 @@ function App() {
                     <Route path="/doctor-availability" element={
                       <ProtectedRoute allowedRoles={['DOCTOR']}>
                         <DoctorAvailability />
+                      </ProtectedRoute>
+                    } />
+
+                    <Route path="/system-logs" element={
+                      <ProtectedRoute allowedRoles={['ADMIN']}>
+                        <SystemLogs />
                       </ProtectedRoute>
                     } />
                     
