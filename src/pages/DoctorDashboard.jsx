@@ -212,6 +212,51 @@ export default function DoctorDashboard() {
         </div>
       </div>
 
+      {/* Quick Actions */}
+      <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <button
+          onClick={() => navigate('/doctor-appointments')}
+          className="card p-4 flex items-center gap-4 hover:shadow-lg transition-all group"
+        >
+          <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+            <Clock className="w-6 h-6 text-blue-600" />
+          </div>
+          <div className="flex-1 text-left">
+            <p className="font-bold text-gray-900">My Appointments</p>
+            <p className="text-sm text-gray-500">View scheduled appointments</p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+        </button>
+
+        <button
+          onClick={() => navigate('/doctor-availability')}
+          className="card p-4 flex items-center gap-4 hover:shadow-lg transition-all group border-2 border-green-200"
+        >
+          <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center group-hover:bg-green-100 transition-colors">
+            <Activity className="w-6 h-6 text-green-600" />
+          </div>
+          <div className="flex-1 text-left">
+            <p className="font-bold text-gray-900">Manage Availability</p>
+            <p className="text-sm text-gray-500">Set your working hours</p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-green-600 transition-colors" />
+        </button>
+
+        <button
+          onClick={() => navigate('/chats')}
+          className="card p-4 flex items-center gap-4 hover:shadow-lg transition-all group"
+        >
+          <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+            <MessageSquare className="w-6 h-6 text-purple-600" />
+          </div>
+          <div className="flex-1 text-left">
+            <p className="font-bold text-gray-900">Messages</p>
+            <p className="text-sm text-gray-500">Chat with patients</p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
+        </button>
+      </div>
+
       {/* View & Filter Controls */}
       <div className="mb-6 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
         {/* Main View Tabs */}

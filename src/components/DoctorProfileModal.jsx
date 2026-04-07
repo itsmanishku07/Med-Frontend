@@ -1,14 +1,16 @@
 import React, { useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { X, Mail, Phone, Award, BookOpen, Calendar, MapPin, Star, MessageSquare, Send, Loader2 } from 'lucide-react'
+import { X, Mail, Phone, Award, BookOpen, Calendar, MapPin, Star, MessageSquare, Send, Loader2, Clock } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import api from '../services/api'
+import DoctorAvailabilityViewer from './DoctorAvailabilityViewer'
 
 export default function DoctorProfileModal({ isOpen, onClose, doctor }) {
   const [isBooking, setIsBooking] = React.useState(false)
   const [bookingNotes, setBookingNotes] = React.useState('')
   const [preferredTime, setPreferredTime] = React.useState('')
   const [submitting, setSubmitting] = React.useState(false)
+  const [showAvailability, setShowAvailability] = React.useState(false)
 
   if (!doctor) return null
 
@@ -44,32 +46,31 @@ export default function DoctorProfileModal({ isOpen, onClose, doctor }) {
   const profile = doctor.profile || {}
 
   return (
-    <Transition show={isOpen} as={React.Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
-        <Transition.Child
-          as={React.Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" />
-        </Transition.Child>
+    <>
+      <Transition show={isOpen}>
+        <Dialog as="div" className="relative z-50" onClose={onClose}>
+          <Transition.Child
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" />
+          </Transition.Child>
 
-        <div className="fixed inset-0 z-10 overflow-y-auto">
-          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-            <Transition.Child
-              as={React.Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-              enterTo="opacity-100 translate-y-0 sm:scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-            >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+          <div className="fixed inset-0 z-10 overflow-y-auto">
+            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+              <Transition.Child
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                enterTo="opacity-100 translate-y-0 sm:scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              >
+                <Dialog.Panel className="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
                 {/* Header Background */}
                 <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-r from-primary-600 to-secondary-500" />
                 
@@ -242,6 +243,14 @@ export default function DoctorProfileModal({ isOpen, onClose, doctor }) {
                     <div className="flex gap-3 pt-4 border-t border-gray-100">
                       <button
                         type="button"
+                        className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-sm shadow-lg transition-all active:scale-95 group bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-purple-500/30 hover:shadow-purple-500/50 hover:-translate-y-0.5"
+                        onClick={() => setShowAvailability(true)}
+                      >
+                        <Clock className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                        View Availability
+                      </button>
+                      <button
+                        type="button"
                         disabled={submitting}
                         className={`flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-sm shadow-lg transition-all active:scale-95 group ${
                           isBooking 
@@ -280,6 +289,14 @@ export default function DoctorProfileModal({ isOpen, onClose, doctor }) {
           </div>
         </div>
       </Dialog>
+      
+      {/* Availability Viewer Modal */}
+      <DoctorAvailabilityViewer
+        isOpen={showAvailability}
+        onClose={() => setShowAvailability(false)}
+        doctor={doctor}
+      />
     </Transition>
+    </>
   )
 }

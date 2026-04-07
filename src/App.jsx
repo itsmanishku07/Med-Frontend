@@ -23,8 +23,10 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
 const Notifications = lazy(() => import('./pages/Notifications'))
 const MedicineReminders = lazy(() => import('./pages/MedicineReminders'))
 const DoctorListing = lazy(() => import('./pages/DoctorListing'))
+const DoctorProfile = lazy(() => import('./pages/DoctorProfile'))
 const MyAppointments = lazy(() => import('./pages/MyAppointments'))
 const DoctorAppointments = lazy(() => import('./pages/DoctorAppointments'))
+const DoctorAvailability = lazy(() => import('./pages/DoctorAvailability'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 function App() {
@@ -113,6 +115,12 @@ function App() {
                       </ProtectedRoute>
                     } />
 
+                    <Route path="/doctor/:doctorId" element={
+                      <ProtectedRoute allowedRoles={['PATIENT', 'ADMIN']}>
+                        <DoctorProfile />
+                      </ProtectedRoute>
+                    } />
+
                     <Route path="/my-appointments" element={
                       <ProtectedRoute allowedRoles={['PATIENT']}>
                         <MyAppointments />
@@ -122,6 +130,12 @@ function App() {
                     <Route path="/doctor-appointments" element={
                       <ProtectedRoute allowedRoles={['DOCTOR']}>
                         <DoctorAppointments />
+                      </ProtectedRoute>
+                    } />
+
+                    <Route path="/doctor-availability" element={
+                      <ProtectedRoute allowedRoles={['DOCTOR']}>
+                        <DoctorAvailability />
                       </ProtectedRoute>
                     } />
                     

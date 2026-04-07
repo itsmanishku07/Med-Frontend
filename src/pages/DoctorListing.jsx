@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react'
-import { Search, Filter, User, Star, MessageSquare, ChevronRight, Award, MapPin } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Search, Filter, User, Star, MessageSquare, ChevronRight, Award, MapPin, ArrowUpDown } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import api from '../services/api'
-import DoctorProfileModal from '../components/DoctorProfileModal'
 
 export default function DoctorListing() {
+  const navigate = useNavigate()
   const [doctors, setDoctors] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSpecialization, setSelectedSpecialization] = useState('All')
-  const [selectedDoctor, setSelectedDoctor] = useState(null)
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
+  const [sortBy, setSortBy] = useState('name') // 'name', 'rating', 'experience'
 
   useEffect(() => {
     fetchDoctors()
@@ -19,9 +19,17 @@ export default function DoctorListing() {
   const fetchDoctors = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/auth/doctors')
-      if (response.data.success) {
-        setDoctors(response.data.doctors || [])
+      const [doctorsRes, reviewsRes] = await Promise.all([
+        api.get('/auth/doctors'),
+        api.get('/reviews/all-stats').catch(() => ({ data: { stats: {} } }))
+      ])
+      
+      if (doctorsRes.data.success) {
+        const doctorsWithRatings = (doctorsRes.data.doctors || []).map(doctor => ({
+          ...doctor,
+          rating: reviewsRes.data.stats?.[doctor.id] || { average_rating: 0, total_reviews: 0 }
+        }))
+        setDoctors(doctorsWithRatings)
       }
     } catch (error) {
       console.error('Error fetching doctors:', error)
@@ -33,16 +41,28 @@ export default function DoctorListing() {
 
   const specializationsList = ['All', ...new Set(doctors.flatMap(d => d.specializations || []))]
 
-  const filteredDoctors = doctors.filter(doctor => {
-    const matchesSearch = doctor.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (doctor.specializations || []).some(s => s.toLowerCase().includes(searchQuery.toLowerCase()))
-    const matchesSpec = selectedSpecialization === 'All' || (doctor.specializations || []).includes(selectedSpecialization)
-    return matchesSearch && matchesSpec
-  })
+  const filteredAndSortedDoctors = doctors
+    .filter(doctor => {
+      const matchesSearch = doctor.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           (doctor.specializations || []).some(s => s.toLowerCase().includes(searchQuery.toLowerCase()))
+      const matchesSpec = selectedSpecialization === 'All' || (doctor.specializations || []).includes(selectedSpecialization)
+      return matchesSearch && matchesSpec
+    })
+    .sort((a, b) => {
+      if (sortBy === 'rating') {
+        // Sort by rating (highest first), then by number of reviews
+        if (b.rating.average_rating !== a.rating.average_rating) {
+          return b.rating.average_rating - a.rating.average_rating
+        }
+        return b.rating.total_reviews - a.rating.total_reviews
+      } else {
+        // Sort alphabetically by name
+        return (a.name || '').localeCompare(b.name || '')
+      }
+    })
 
-  const openProfile = (doctor) => {
-    setSelectedDoctor(doctor)
-    setIsProfileModalOpen(true)
+  const openProfile = (doctorId) => {
+    navigate(`/doctor/${doctorId}`)
   }
 
   if (loading) {
@@ -103,10 +123,51 @@ export default function DoctorListing() {
               </button>
             ))}
           </div>
+
+          {/* Sort Options */}
+          <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center gap-2 text-gray-500 font-bold text-xs uppercase tracking-widest">
+              <ArrowUpDown className="w-4 h-4" />
+              Sort By:
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSortBy('rating')}
+                className={`px-5 py-2 rounded-xl text-xs font-bold transition-all border ${
+                  sortBy === 'rating'
+                    ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/30'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-amber-300 hover:text-amber-600'
+                }`}
+              >
+                <Star className="w-3 h-3 inline mr-1" />
+                Highest Rating
+              </button>
+              <button
+                onClick={() => setSortBy('name')}
+                className={`px-5 py-2 rounded-xl text-xs font-bold transition-all border ${
+                  sortBy === 'name'
+                    ? 'bg-gray-600 text-white border-gray-600 shadow-lg shadow-gray-500/30'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:text-gray-700'
+                }`}
+              >
+                Name (A-Z)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Results Count */}
+        <div className="mb-6 text-center">
+          <p className="text-sm text-gray-600 font-medium">
+            Showing <span className="font-bold text-gray-900">{filteredAndSortedDoctors.length}</span> {filteredAndSortedDoctors.length === 1 ? 'doctor' : 'doctors'}
+            {selectedSpecialization !== 'All' && (
+              <span> in <span className="font-bold text-primary-600">{selectedSpecialization}</span></span>
+            )}
+          </p>
         </div>
 
         {/* Doctor Grid */}
-        {filteredDoctors.length === 0 ? (
+        {filteredAndSortedDoctors.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-200">
             <User className="mx-auto h-12 w-12 text-gray-300 mb-4" />
             <h3 className="text-xl font-bold text-gray-900">No doctors found</h3>
@@ -114,7 +175,7 @@ export default function DoctorListing() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredDoctors.map((doctor) => (
+            {filteredAndSortedDoctors.map((doctor) => (
               <div 
                 key={doctor.id} 
                 className="group bg-white rounded-3xl border border-gray-100 hover:border-primary-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
@@ -149,10 +210,12 @@ export default function DoctorListing() {
                       <h3 className="text-lg font-black text-gray-900 truncate tracking-tight">
                         Dr. {doctor.name}
                       </h3>
-                      <div className="flex items-center gap-1 text-amber-500 font-bold text-xs bg-amber-50 px-1.5 py-0.5 rounded-lg">
-                        <Star className="w-3 h-3 fill-amber-500" />
-                        4.9
-                      </div>
+                      {doctor.rating?.total_reviews > 0 && (
+                        <div className="flex items-center gap-1 text-amber-500 font-bold text-xs bg-amber-50 px-1.5 py-0.5 rounded-lg">
+                          <Star className="w-3 h-3 fill-amber-500" />
+                          {doctor.rating.average_rating.toFixed(1)}
+                        </div>
+                      )}
                     </div>
                     <p className="text-sm font-bold text-primary-600 mt-0.5">
                       {doctor.specializations?.[0] || 'Medical Specialist'}
@@ -175,7 +238,7 @@ export default function DoctorListing() {
                   </div>
 
                   <button
-                    onClick={() => openProfile(doctor)}
+                    onClick={() => openProfile(doctor.id)}
                     className="w-full mt-auto flex items-center justify-center gap-2 bg-gray-50 hover:bg-primary-600 text-gray-700 hover:text-white px-4 py-3 rounded-2xl font-bold text-sm transition-all group/btn"
                   >
                     View Profile
@@ -204,13 +267,6 @@ export default function DoctorListing() {
           </div>
         </div>
       </div>
-
-      {/* Profile Modal */}
-      <DoctorProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
-        doctor={selectedDoctor}
-      />
     </div>
   )
 }
