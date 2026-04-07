@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Pill, Plus, Trash2, Bell, BellOff, Clock, Edit3, Save, X, AlarmCheck, VolumeX, Smartphone } from 'lucide-react'
+import { Pill, Plus, Trash2, Bell, BellOff, Clock, Edit3, Save, X, AlarmCheck, VolumeX, Smartphone, Info, ShieldCheck, AlertTriangle, Timer, FileText, Loader2 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
-import api from '../services/api'
+import api, { medicineReminderAPI } from '../services/api'
 import { subscribeToPush, unsubscribeFromPush, registerServiceWorker } from '../services/pushSubscription'
+import ConfirmationModal from '../components/ConfirmationModal'
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const emptyForm = { medicine_name: '', dosage: '', reminder_time: '', days: [], notes: '' }
@@ -78,6 +79,112 @@ function AlarmModal({ alarm, onStop }) {
   )
 }
 
+// ── AI Medicine Info Modal ────────────────────────────────────────────────────
+function MedicineInfoModal({ info, onClose }) {
+  if (!info) return null
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-blue-50/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+              <Pill className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">{info.medicine_name}</h2>
+              <p className="text-xs text-blue-600 font-medium uppercase tracking-wider">AI Verified Information</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-white rounded-xl transition-colors shadow-sm border border-transparent hover:border-gray-200">
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+          {/* Professional Summary */}
+          <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2 text-gray-900 font-semibold">
+              <FileText className="w-4 h-4 text-blue-500" />
+              <span>Overview</span>
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">{info.professional_summary}</p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            {/* Benefits */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-green-700 font-semibold">
+                <ShieldCheck className="w-4 h-4" />
+                <span>Primary Benefits</span>
+              </div>
+              <ul className="space-y-2">
+                {info.benefits.map((b, i) => (
+                  <li key={i} className="flex gap-2 text-sm text-gray-600 group">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 mt-1.5 shrink-0 group-hover:scale-125 transition-transform" />
+                    {b}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Side Effects */}
+            <div className="space-y-3 p-4 bg-orange-50/50 rounded-2xl border border-orange-100">
+              <div className="flex items-center gap-2 text-orange-700 font-semibold">
+                <AlertTriangle className="w-4 h-4" />
+                <span>Side Effects</span>
+              </div>
+              <ul className="space-y-2">
+                {info.side_effects.map((s, i) => (
+                  <li key={i} className="flex gap-2 text-sm text-gray-600">
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange-300 mt-1.5 shrink-0" />
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Dosage Timing */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-blue-700 font-semibold">
+                <Timer className="w-4 h-4" />
+                <span>Optimal Timing</span>
+              </div>
+              <p className="text-sm text-gray-600 pl-6">{info.dosage_timing}</p>
+            </div>
+
+            {/* When to Avoid */}
+            <div className="space-y-3 p-4 bg-red-50/50 rounded-2xl border border-red-100">
+              <div className="flex items-center gap-2 text-red-700 font-semibold">
+                <AlertTriangle className="w-4 h-4" />
+                <span>Precautions</span>
+              </div>
+              <ul className="space-y-2">
+                {info.when_to_avoid.map((a, i) => (
+                  <li key={i} className="flex gap-2 text-sm text-gray-600">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-300 mt-1.5 shrink-0" />
+                    {a}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <p className="text-[10px] text-gray-400 text-center italic mt-4">
+            Disclaimer: This information is AI-generated for educational purposes. Always consult your doctor before starting or changing medications.
+          </p>
+        </div>
+
+        <div className="p-4 border-t border-gray-50 bg-gray-50/30">
+          <button onClick={onClose} className="w-full py-3 bg-white border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+            Close Information
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function MedicineReminders() {
   const [reminders, setReminders] = useState([])
@@ -89,6 +196,10 @@ export default function MedicineReminders() {
   const [activeAlarm, setActiveAlarm] = useState(null)
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushLoading, setPushLoading] = useState(false)
+  const [selectedInfo, setSelectedInfo] = useState(null)
+  const [fetchingInfo, setFetchingInfo] = useState(null) // ID of reminder being fetched
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [reminderToDelete, setReminderToDelete] = useState(null)
   const firedRef = useRef(new Set())
   const stopAlarmRef = useRef(null)
 
@@ -187,6 +298,18 @@ export default function MedicineReminders() {
     setShowForm(true)
   }
 
+  const handleFetchInfo = async (id) => {
+    setFetchingInfo(id)
+    try {
+      const res = await medicineReminderAPI.getMedicineInfo(id)
+      setSelectedInfo(res.data.ai_info)
+    } catch {
+      toast.error('Failed to fetch medicine information')
+    } finally {
+      setFetchingInfo(null)
+    }
+  }
+
   const handleSave = async () => {
     if (!form.medicine_name.trim()) return toast.error('Medicine name is required')
     if (!form.reminder_time) return toast.error('Reminder time is required')
@@ -216,13 +339,19 @@ export default function MedicineReminders() {
     }
   }
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this reminder?')) return
+  const handleDelete = async () => {
+    if (!reminderToDelete) return
+    setIsDeleteModalOpen(false)
+    
     try {
-      await api.delete('/medicine-reminders/' + id)
-      setReminders(prev => prev.filter(r => r.id !== id))
+      await api.delete('/medicine-reminders/' + reminderToDelete)
+      setReminders(prev => prev.filter(r => r.id !== reminderToDelete))
       toast.success('Reminder deleted')
-    } catch { toast.error('Failed to delete') }
+    } catch { 
+      toast.error('Failed to delete') 
+    } finally {
+      setReminderToDelete(null)
+    }
   }
 
   const handleToggleActive = async (r) => {
@@ -250,6 +379,9 @@ export default function MedicineReminders() {
     <>
       {/* Continuous alarm modal */}
       {activeAlarm && <AlarmModal alarm={activeAlarm} onStop={stopAlarm} />}
+
+      {/* AI Medicine Info Modal */}
+      {selectedInfo && <MedicineInfoModal info={selectedInfo} onClose={() => setSelectedInfo(null)} />}
 
       <div className="max-w-3xl mx-auto px-4 pt-24 pb-12">
         {/* Header */}
@@ -414,10 +546,22 @@ export default function MedicineReminders() {
                     className={'p-2 rounded-lg transition-colors ' + (r.is_active ? 'text-blue-600 hover:bg-blue-50' : 'text-gray-400 hover:bg-gray-100')}>
                     {r.is_active ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
                   </button>
+                  <button onClick={() => handleFetchInfo(r.id)}
+                    disabled={fetchingInfo === r.id}
+                    title="Medicine Information"
+                    className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50">
+                    {fetchingInfo === r.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Info className="w-4 h-4" />}
+                  </button>
                   <button onClick={() => openEdit(r)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
                     <Edit3 className="w-4 h-4" />
                   </button>
-                  <button onClick={() => handleDelete(r.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                  <button 
+                    onClick={() => {
+                      setReminderToDelete(r.id)
+                      setIsDeleteModalOpen(true)
+                    }} 
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -426,6 +570,21 @@ export default function MedicineReminders() {
           </div>
         )}
       </div>
+
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false)
+          setReminderToDelete(null)
+        }}
+        onConfirm={handleDelete}
+        title="Delete Medicine Reminder"
+        message="Are you sure you want to delete this medicine reminder? You won't receive alarms for this anymore."
+        confirmLabel="Delete Reminder"
+        cancelLabel="Keep Reminder"
+        type="danger"
+        icon={Trash2}
+      />
     </>
   )
 }

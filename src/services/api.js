@@ -58,6 +58,8 @@ export const authAPI = {
   getProfile: () => api.get('/auth/profile'),
   updateProfile: (userData) => api.put('/auth/profile', userData),
   validateToken: () => api.get('/auth/validate'),
+  signupRequest: (data) => api.post('/auth/signup/request', data),
+  signupVerify: (data) => api.post('/auth/signup/verify', data),
 }
 
 export const medicalReportAPI = {
@@ -74,6 +76,7 @@ export const medicalReportAPI = {
   reviewReport: (id, notes) => api.post(`/medical-reports/${id}/review`, { notes }),
   archiveReport: (id, isArchived) => api.put(`/medical-reports/${id}/archive`, { is_archived: isArchived }),
   updateAiAnalysis: (id, aiAnalysis) => api.put(`/medical-reports/${id}/ai-analysis`, { ai_analysis: aiAnalysis }),
+  getGenericMedicineInfo: (name) => api.get('/medical-reports/medicine-info', { params: { name } }),
 }
 
 export const notificationAPI = {
@@ -102,6 +105,14 @@ export const adminAPI = {
   getUsers: () => api.get('/admin/users'),
   updateUserRole: (firebaseUid, role) => api.put(`/admin/users/${firebaseUid}/role`, { role }),
   updateUserStatus: (firebaseUid, active) => api.put(`/admin/users/${firebaseUid}/status`, { active }),
+}
+
+export const medicineReminderAPI = {
+  getReminders: () => api.get('/medicine-reminders/'),
+  createReminder: (data) => api.post('/medicine-reminders/', data),
+  updateReminder: (id, data) => api.put(`/medicine-reminders/${id}`, data),
+  deleteReminder: (id) => api.delete(`/medicine-reminders/${id}`),
+  getMedicineInfo: (id) => api.get(`/medicine-reminders/${id}/info`),
 }
 
 export default api

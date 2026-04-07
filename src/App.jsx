@@ -11,6 +11,7 @@ import LoadingSpinner from './components/LoadingSpinner'
 const LandingPage = lazy(() => import('./pages/LandingPage'))
 const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
+const VerifyEmail = lazy(() => import('./pages/VerifyEmail'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Profile = lazy(() => import('./pages/Profile'))
 const PatientDashboard = lazy(() => import('./pages/PatientDashboard'))
@@ -21,6 +22,9 @@ const ChatRealtime = lazy(() => import('./pages/ChatRealtime'))
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
 const Notifications = lazy(() => import('./pages/Notifications'))
 const MedicineReminders = lazy(() => import('./pages/MedicineReminders'))
+const DoctorListing = lazy(() => import('./pages/DoctorListing'))
+const MyAppointments = lazy(() => import('./pages/MyAppointments'))
+const DoctorAppointments = lazy(() => import('./pages/DoctorAppointments'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 function App() {
@@ -41,6 +45,7 @@ function App() {
                     <Route path="/home" element={<LandingPage />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
+                    <Route path="/verify-email" element={<VerifyEmail />} />
                     
                     <Route path="/" element={
                       <ProtectedRoute>
@@ -99,6 +104,24 @@ function App() {
                     <Route path="/medicine-reminders" element={
                       <ProtectedRoute allowedRoles={['PATIENT']}>
                         <MedicineReminders />
+                      </ProtectedRoute>
+                    } />
+
+                    <Route path="/doctors" element={
+                      <ProtectedRoute allowedRoles={['PATIENT', 'ADMIN']}>
+                        <DoctorListing />
+                      </ProtectedRoute>
+                    } />
+
+                    <Route path="/my-appointments" element={
+                      <ProtectedRoute allowedRoles={['PATIENT']}>
+                        <MyAppointments />
+                      </ProtectedRoute>
+                    } />
+
+                    <Route path="/doctor-appointments" element={
+                      <ProtectedRoute allowedRoles={['DOCTOR']}>
+                        <DoctorAppointments />
                       </ProtectedRoute>
                     } />
                     

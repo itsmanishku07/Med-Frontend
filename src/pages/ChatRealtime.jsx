@@ -7,6 +7,7 @@ import socketService from '../services/socket'
 import api from '../services/api'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import ConfirmationModal from '../components/ConfirmationModal'
 
 
 export default function ChatRealtime() {
@@ -22,6 +23,7 @@ export default function ChatRealtime() {
   const [typing, setTyping] = useState(null)
   const [selectedImage, setSelectedImage] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const messagesEndRef = useRef(null)
   const typingTimeoutRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -262,10 +264,8 @@ export default function ChatRealtime() {
   }
 
   const handleDeleteChat = async () => {
-    if (!window.confirm("Are you sure you want to delete this conversation? This cannot be undone.")) {
-      return
-    }
-
+    setIsDeleteModalOpen(false)
+    
     try {
       const response = await api.delete(`/chats/${chat.id}`)
       if (response.data.success) {
@@ -346,7 +346,7 @@ export default function ChatRealtime() {
           </button>
           {chat && (
             <button
-              onClick={handleDeleteChat}
+              onClick={() => setIsDeleteModalOpen(true)}
               className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="Delete Chat"
             >
@@ -512,6 +512,18 @@ export default function ChatRealtime() {
           </p>
         )}
       </div>
+
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteChat}
+        title="Delete Conversation"
+        message="Are you sure you want to delete this conversation? All messages will be permanently removed. This action cannot be undone."
+        confirmLabel="Delete Chat"
+        cancelLabel="Keep Chat"
+        type="danger"
+        icon={Trash2}
+      />
     </div>
   )
 }

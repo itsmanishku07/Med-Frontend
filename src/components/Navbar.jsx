@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/FirebaseAuthContext'
-import { Menu, X, User, LogOut, Activity, Users, Home, FileText, MessageSquare, Bell, Pill } from 'lucide-react'
+import { Menu, X, User, LogOut, Activity, Users, Home, FileText, MessageSquare, Bell, Pill, Calendar, ChevronRight } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 
 const Navbar = () => {
@@ -24,6 +24,11 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [location])
+
   const handleLogout = async () => {
     await logout()
     navigate('/login')
@@ -31,7 +36,8 @@ const Navbar = () => {
   }
 
   const isActivePath = (path) => {
-    return location.pathname === path
+    if (path === '/' && location.pathname !== '/') return false
+    return location.pathname.startsWith(path)
   }
 
   const navItems = [
@@ -48,7 +54,7 @@ const Navbar = () => {
       show: isAuthenticated
     },
     {
-      name: 'My Reports',
+      name: 'Reports',
       path: '/patient-dashboard',
       icon: FileText,
       show: isPatient || isAdmin
@@ -60,7 +66,19 @@ const Navbar = () => {
       show: isAuthenticated
     },
     {
-      name: 'My Patients',
+      name: 'Doctors',
+      path: '/doctors',
+      icon: Users,
+      show: isPatient || isAdmin
+    },
+    {
+      name: 'Appointments',
+      path: isPatient ? '/my-appointments' : '/doctor-appointments',
+      icon: Calendar,
+      show: isPatient || isDoctor
+    },
+    {
+      name: 'Patients',
       path: '/doctor-dashboard',
       icon: Users,
       show: isDoctor || isAdmin
@@ -70,39 +88,32 @@ const Navbar = () => {
       path: '/medicine-reminders',
       icon: Pill,
       show: isPatient
-    },
-    {
-      name: 'Profile',
-      path: '/profile',
-      icon: User,
-      show: isAuthenticated
     }
   ]
 
   return (
-    <nav className={`fixed w-full top-0 z-50 transition-all duration-300 border-b ${
+    <nav className={`fixed w-full top-0 z-50 transition-all duration-500 ${
       scrolled 
-        ? 'bg-white/80 backdrop-blur-xl border-gray-200 shadow-sm py-2' 
-        : 'bg-white/50 backdrop-blur-md border-transparent py-4'
+        ? 'bg-white/90 backdrop-blur-xl border-b border-gray-200 shadow-sm py-2' 
+        : 'bg-transparent py-4 border-b border-transparent'
     }`}>
-      <div className="container mx-auto px-4 lg:px-8">
-        <div className="flex justify-between items-center relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-12">
           
           {/* Logo Area */}
-          <Link to="/" className="flex items-center space-x-3 group relative z-10">
-            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 flex items-center justify-center shadow-lg shadow-primary-500/30 group-hover:scale-105 transition-transform duration-300">
-              <div className="absolute inset-0 bg-white/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <Link to="/" className="flex items-center space-x-2.5 group z-50 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center shadow-lg shadow-primary-500/20 group-hover:scale-105 transition-all duration-300">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent tracking-tight">
-              MedReport <span className="text-primary-600">AI</span>
+            <span className="text-xl font-bold tracking-tight text-gray-900 hidden sm:block">
+              MedReport<span className="text-primary-600">AI</span>
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-1 flex-1 justify-center px-4">
+          {/* Desktop Navigation - Hidden on lg and smaller if items are many, but here we use lg as breakpoint */}
+          <div className="hidden lg:flex items-center justify-center flex-1 px-8 space-x-1">
             {navItems.filter(item => item.show).map((item) => {
               const Icon = item.icon
               const active = isActivePath(item.path)
@@ -110,182 +121,169 @@ const Navbar = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-xl transition-all duration-300 relative group overflow-hidden whitespace-nowrap ${
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-xl transition-all duration-200 ${
                     active
-                      ? 'text-primary-700 font-semibold bg-primary-50/80 shadow-sm'
-                      : 'text-gray-600 hover:text-primary-600 hover:bg-primary-50/50'
+                      ? 'text-primary-700 font-semibold bg-primary-50'
+                      : 'text-gray-600 hover:text-primary-600 hover:bg-gray-50'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${active ? 'text-primary-600' : 'group-hover:text-primary-500 transition-colors'}`} />
-                  <span className="text-sm">{item.name}</span>
+                  <Icon className="w-4 h-4" />
+                  <span className="text-sm tracking-wide">{item.name}</span>
                 </Link>
               )
             })}
           </div>
 
-          {/* Right Side Actions Desktop */}
-          <div className="hidden md:flex items-center space-x-3 z-10">
+          {/* Right side actions - Desktop */}
+          <div className="hidden lg:flex items-center space-x-4 z-50">
             {isAuthenticated ? (
               <>
-                <div className="hidden sm:block">
-                  <NotificationBell />
-                </div>
-
+                <NotificationBell />
                 <div className="relative group">
-                  <button className="flex items-center space-x-3 p-1 pr-3 rounded-full border border-gray-200 hover:border-primary-200 bg-white shadow-sm hover:shadow-md transition-all duration-300">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center shadow-inner">
-                      <span className="text-white text-sm font-bold">
-                        {userProfile?.name?.charAt(0).toUpperCase()}
+                  <button className="flex items-center space-x-3 p-1 pr-3 rounded-full border border-transparent hover:border-gray-200 hover:bg-gray-50 transition-all">
+                    <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center shadow-md">
+                      <span className="text-white text-xs font-bold uppercase">
+                        {userProfile?.name?.charAt(0)}
                       </span>
                     </div>
-                    <span className="text-sm font-semibold text-gray-700 hidden lg:block">
+                    <span className="text-sm font-semibold text-gray-700 hidden xl:block">
                       {userProfile?.name?.split(' ')[0]}
                     </span>
                   </button>
                   
-                  {/* Dropdown menu */}
-                  <div className="absolute right-0 mt-3 w-64 bg-white/95 backdrop-blur-xl rounded-2xl shadow-glass border border-white/60 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right group-hover:translate-y-0 translate-y-2 z-50">
-                    <div className="p-5 border-b border-gray-100 bg-gradient-to-br from-primary-50/50 to-white rounded-t-2xl">
-                      <p className="text-base font-bold text-gray-900 truncate">{userProfile?.name}</p>
-                      <p className="text-sm text-gray-500 mt-1 truncate">{userProfile?.email}</p>
-                      <span className="inline-flex items-center mt-3 px-2.5 py-1 bg-gradient-to-r from-primary-100 to-primary-50 text-primary-800 text-xs font-bold uppercase tracking-wider rounded-md border border-primary-200/50 shadow-sm">
-                        {userProfile?.role === 'PATIENT' ? 'Patient' : 
-                         userProfile?.role === 'DOCTOR' ? 'Doctor' : 'Administrator'}
-                      </span>
+                  {/* Hover Dropdown */}
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0">
+                    <div className="p-4 border-b border-gray-50">
+                      <p className="text-sm font-bold text-gray-900 truncate">{userProfile?.name}</p>
+                      <p className="text-xs text-gray-500 truncate mt-0.5">{userProfile?.email}</p>
                     </div>
-                    <div className="p-2 space-y-1">
-                      <Link
-                        to="/profile"
-                        className="flex items-center space-x-3 px-4 py-3 hover:bg-primary-50/80 rounded-xl transition-colors text-gray-700 hover:text-primary-700 font-medium group/item"
-                      >
-                        <User className="w-5 h-5 text-gray-400 group-hover/item:text-primary-500 transition-colors" />
-                        <span>My Profile</span>
+                    <div className="p-1.5">
+                      <Link to="/profile" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors">
+                        <User className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm font-medium">My Profile</span>
                       </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-red-50 rounded-xl transition-colors text-left text-gray-700 hover:text-red-700 font-medium group/item"
-                      >
-                        <LogOut className="w-5 h-5 text-gray-400 group-hover/item:text-red-500 transition-colors" />
-                        <span>Sign Out</span>
+                      <button onClick={handleLogout} className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg hover:bg-red-50 text-red-600 transition-colors">
+                        <LogOut className="w-4 h-4" />
+                        <span className="text-sm font-medium">Log Out</span>
                       </button>
                     </div>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="flex items-center space-x-3">
-                <Link
-                  to="/login"
-                  className="px-5 py-2.5 text-gray-600 hover:text-primary-600 font-medium text-sm transition-colors"
-                >
+              <div className="flex items-center space-x-2">
+                <Link to="/login" className="px-4 py-2 text-sm font-semibold text-gray-600 hover:text-primary-600">
                   Sign In
                 </Link>
-                <Link
-                  to="/register"
-                  className="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-xl font-medium text-sm shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 transition-all hover:-translate-y-0.5 active:scale-95"
-                >
+                <Link to="/register" className="px-5 py-2.5 text-sm font-bold text-white bg-primary-600 rounded-xl hover:bg-primary-700 shadow-lg shadow-primary-500/20 transition-all active:scale-95">
                   Get Started
                 </Link>
               </div>
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 rounded-xl text-gray-600 hover:bg-gray-100 transition-colors relative z-10"
-          >
-            {isMobileMenuOpen ? (
-              <X className="w-6 h-6 text-primary-600" />
-            ) : (
-              <div className="flex items-center space-x-2">
-                {!isAuthenticated && <span className="text-xs font-semibold text-primary-600 mr-1">Menu</span>}
-                <Menu className="w-6 h-6" />
-              </div>
-            )}
-          </button>
+          {/* Mobile Menu Actions (Icons) */}
+          <div className="flex lg:hidden items-center space-x-3 z-50">
+            {isAuthenticated && <NotificationBell />}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-xl text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition-all"
+            >
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
+      </div>
 
-        {/* Mobile Menu Overlay */}
-        <div className={`lg:hidden absolute top-full left-0 w-full bg-white shadow-2xl border-b border-gray-100 transition-all duration-300 origin-top overflow-hidden z-40 ${
-          isMobileMenuOpen ? 'max-h-[600px] opacity-100 visible py-6' : 'max-h-0 opacity-0 invisible py-0'
-        }`}>
-          <div className="px-4 space-y-1 pb-4">
-            {isAuthenticated ? (
-              <>
-                <div className="p-4 bg-gradient-to-br from-primary-50/50 to-gray-50 rounded-2xl mb-4 border border-gray-100">
-                  <p className="font-bold text-gray-900">{userProfile?.name}</p>
-                  <p className="text-sm text-gray-500 mt-1">{userProfile?.email}</p>
-                  <span className="inline-block mt-3 px-2 py-1 bg-primary-100 text-primary-800 text-xs font-bold uppercase tracking-wider rounded">
-                    {userProfile?.role}
-                  </span>
+      {/* Backdrop Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-gray-900/20 backdrop-blur-sm z-30 transition-opacity"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Mobile Menu Slider */}
+      <div className={`lg:hidden fixed inset-y-0 right-0 w-4/5 max-w-sm bg-white z-40 shadow-2xl transition-all duration-300 ease-in-out transform ${
+        isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+      }`}>
+        <div className="h-full flex flex-col pt-20 pb-6 px-6 overflow-y-auto">
+          {isAuthenticated ? (
+            <>
+              {/* Mobile Profile Header */}
+              <div className="mb-8 p-5 bg-gradient-to-br from-gray-50 to-white rounded-3xl border border-gray-100 shadow-sm">
+                <div className="flex items-center space-x-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-primary-500/20">
+                    {userProfile?.name?.charAt(0)}
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <h4 className="text-lg font-bold text-gray-900 truncate">{userProfile?.name}</h4>
+                    <p className="text-xs text-gray-500 truncate">{userProfile?.email}</p>
+                    <div className="mt-2 flex">
+                      <span className="px-2 py-0.5 bg-primary-50 text-primary-700 text-[10px] font-bold uppercase tracking-wider rounded border border-primary-100">
+                        {userProfile?.role}
+                      </span>
+                    </div>
+                  </div>
                 </div>
+              </div>
 
+              {/* Mobile Nav Links */}
+              <div className="space-y-1 flex-1">
                 {navItems.filter(item => item.show).map((item) => {
                   const Icon = item.icon
                   const active = isActivePath(item.path)
                   return (
                     <Link
-                      key={item.path}
+                      key={item.name}
                       to={item.path}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center space-x-3 px-4 py-3.5 rounded-xl transition-colors font-medium ${
-                        active
-                          ? 'bg-primary-50 text-primary-700'
-                          : 'text-gray-600 hover:bg-gray-50'
+                      className={`flex items-center justify-between p-4 rounded-2xl transition-all ${
+                        active ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
-                      <Icon className={`w-5 h-5 ${active ? 'text-primary-600' : 'text-gray-400'}`} />
-                      <span>{item.name}</span>
+                      <div className="flex items-center space-x-4">
+                        <Icon className={`w-5 h-5 ${active ? 'text-primary-600' : 'text-gray-400'}`} />
+                        <span className="font-bold text-base">{item.name}</span>
+                      </div>
+                      <ChevronRight className={`w-4 h-4 ${active ? 'text-primary-400' : 'text-gray-300'}`} />
                     </Link>
                   )
                 })}
+              </div>
 
-                <div className="h-px bg-gray-100 my-2"></div>
-
-                <Link
-                  to="/profile"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center space-x-3 px-4 py-3.5 text-gray-600 hover:bg-gray-50 rounded-xl transition-colors font-medium"
-                >
+              {/* Mobile Actions */}
+              <div className="mt-auto space-y-3 pt-6 border-t border-gray-100">
+                <Link to="/profile" className="flex items-center space-x-4 p-4 text-gray-600 font-bold hover:text-primary-600 transition-colors">
                   <User className="w-5 h-5 text-gray-400" />
-                  <span>My Profile</span>
+                  <span>Account Settings</span>
                 </Link>
-
-                <button
+                <button 
                   onClick={handleLogout}
-                  className="w-full flex items-center space-x-3 px-4 py-3.5 text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium"
+                  className="w-full flex items-center space-x-4 p-4 bg-red-50 text-red-600 rounded-2xl font-bold active:bg-red-100 transition-all"
                 >
                   <LogOut className="w-5 h-5" />
-                  <span>Sign Out</span>
+                  <span>Log Out</span>
                 </button>
-              </>
-            ) : (
-              <div className="space-y-3 pt-2">
-                <Link
-                  to="/home"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block px-4 py-3.5 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium"
-                >
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col h-full">
+              <div className="space-y-4">
+                <Link to="/home" className="flex items-center justify-between p-4 text-gray-800 font-bold text-lg border-b border-gray-50">
                   Home
+                  <ChevronRight className="w-5 h-5 text-gray-300" />
                 </Link>
-                <Link
-                  to="/login"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block px-4 py-3.5 text-center text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-xl transition-colors font-semibold"
-                >
+              </div>
+              <div className="mt-auto space-y-4">
+                <Link to="/login" className="block w-full py-4 text-center font-bold text-gray-700 bg-gray-100 rounded-2xl active:bg-gray-200 transition-colors">
                   Sign In
                 </Link>
-                <Link
-                  to="/register"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block px-4 py-3.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl transition-colors font-semibold text-center shadow-lg shadow-primary-500/20"
-                >
+                <Link to="/register" className="block w-full py-4 text-center font-bold text-white bg-primary-600 rounded-2xl shadow-lg shadow-primary-500/30 active:scale-95 transition-all">
                   Get Started Free
                 </Link>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </nav>

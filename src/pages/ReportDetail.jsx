@@ -5,12 +5,119 @@ import {
   ArrowLeft, FileText, User, Calendar, Activity, AlertTriangle,
   Heart, Thermometer, Droplet, Wind, CheckCircle, XCircle,
   Pill, Clipboard, TrendingUp, Brain, Stethoscope, Info, Printer, MessageSquare,
-  Edit3, Save, X, Plus, Trash2, ChevronDown, ChevronUp, Send, Mic, MicOff
+  Edit3, Save, X, Plus, Trash2, ChevronDown, ChevronUp, Send, Mic, MicOff, ShieldCheck, Timer, FileText as FileTextIcon, Loader2
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
-import api from '../services/api'
+import api, { medicalReportAPI } from '../services/api'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import ConfirmationModal from '../components/ConfirmationModal'
+
+// ── AI Medicine Info Modal ────────────────────────────────────────────────────
+function MedicineInfoModal({ info, onClose }) {
+  if (!info) return null
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-blue-50/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+              <Pill className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">{info.medicine_name}</h2>
+              <p className="text-xs text-blue-600 font-medium uppercase tracking-wider">AI Verified Information</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-white rounded-xl transition-colors shadow-sm border border-transparent hover:border-gray-200">
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+          {/* Professional Summary */}
+          <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2 text-gray-900 font-semibold">
+              <FileTextIcon className="w-4 h-4 text-blue-500" />
+              <span>Overview</span>
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">{info.professional_summary}</p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            {/* Benefits */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-green-700 font-semibold">
+                <ShieldCheck className="w-4 h-4" />
+                <span>Primary Benefits</span>
+              </div>
+              <ul className="space-y-2">
+                {info.benefits.map((b, i) => (
+                  <li key={i} className="flex gap-2 text-sm text-gray-600 group">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 mt-1.5 shrink-0 group-hover:scale-125 transition-transform" />
+                    {b}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Side Effects */}
+            <div className="space-y-3 p-4 bg-orange-50/50 rounded-2xl border border-orange-100">
+              <div className="flex items-center gap-2 text-orange-700 font-semibold">
+                <AlertTriangle className="w-4 h-4" />
+                <span>Side Effects</span>
+              </div>
+              <ul className="space-y-2">
+                {info.side_effects.map((s, i) => (
+                  <li key={i} className="flex gap-2 text-sm text-gray-600">
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange-300 mt-1.5 shrink-0" />
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Dosage Timing */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-blue-700 font-semibold">
+                <Timer className="w-4 h-4" />
+                <span>Optimal Timing</span>
+              </div>
+              <p className="text-sm text-gray-600 pl-6">{info.dosage_timing}</p>
+            </div>
+
+            {/* When to Avoid */}
+            <div className="space-y-3 p-4 bg-red-50/50 rounded-2xl border border-red-100">
+              <div className="flex items-center gap-2 text-red-700 font-semibold">
+                <AlertTriangle className="w-4 h-4" />
+                <span>Precautions</span>
+              </div>
+              <ul className="space-y-2">
+                {info.when_to_avoid.map((a, i) => (
+                  <li key={i} className="flex gap-2 text-sm text-gray-600">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-300 mt-1.5 shrink-0" />
+                    {a}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <p className="text-[10px] text-gray-400 text-center italic mt-4">
+            Disclaimer: This information is AI-generated for educational purposes. Always consult your doctor before starting or changing medications.
+          </p>
+        </div>
+
+        <div className="p-4 border-t border-gray-50 bg-gray-50/30">
+          <button onClick={onClose} className="w-full py-3 bg-white border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+            Close Information
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function ReportDetail() {
   const { reportId } = useParams()
@@ -41,6 +148,12 @@ export default function ReportDetail() {
   const [isListening, setIsListening] = useState(false)
   const [loadingHistory, setLoadingHistory] = useState(false)
   const recognitionRef = useRef(null)
+  const [selectedMedicineInfo, setSelectedMedicineInfo] = useState(null)
+  const [fetchingMedicineInfo, setFetchingMedicineInfo] = useState(null)
+
+  // Confirmation Modals State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isClearChatModalOpen, setIsClearChatModalOpen] = useState(false)
 
   useEffect(() => {
     fetchReport()
@@ -96,15 +209,15 @@ export default function ReportDetail() {
 
     const questionText = aiQuestion.trim()
     setAiQuestion('')
-    
+
     // Optimistic update
     const tempUserMsg = { id: Date.now(), role: 'user', content: questionText, timestamp: new Date().toISOString() }
     setAiChatHistory(prev => [...prev, tempUserMsg])
-    
+
     try {
       setIsAskingAI(true)
       const response = await api.post(`/medical-reports/${reportId}/ask`, { question: questionText })
-      
+
       if (response.data.success) {
         // Replace temp message with real one and add AI response
         setAiChatHistory(prev => {
@@ -123,8 +236,8 @@ export default function ReportDetail() {
   }
 
   const handleClearAIChat = async () => {
-    if (!window.confirm('Are you sure you want to clear the AI chat history? This cannot be undone.')) return
-    
+    setIsClearChatModalOpen(false)
+
     try {
       const response = await api.delete(`/medical-reports/${reportId}/ai-chat`)
       if (response.data.success) {
@@ -136,6 +249,24 @@ export default function ReportDetail() {
     } catch (error) {
       console.error('Error clearing AI chat history:', error)
       toast.error('Failed to clear chat history')
+    }
+  }
+
+  const handleFetchMedicineInfo = async (name) => {
+    if (!name) return
+    setFetchingMedicineInfo(name)
+    try {
+      const response = await medicalReportAPI.getGenericMedicineInfo(name)
+      if (response.data.success) {
+        setSelectedMedicineInfo(response.data.ai_info)
+      } else {
+        toast.error(response.data.message || 'Failed to fetch medicine info')
+      }
+    } catch (error) {
+      console.error('Error fetching medicine info:', error)
+      toast.error('Failed to communicate with AI')
+    } finally {
+      setFetchingMedicineInfo(null)
     }
   }
 
@@ -167,7 +298,8 @@ export default function ReportDetail() {
     }
   }
 
-  const triggerAIAnalysis = async () => {    try {
+  const triggerAIAnalysis = async () => {
+    try {
       setAnalyzing(true)
       toast.loading('Analyzing report with AI...', { id: 'ai-analysis' })
 
@@ -198,14 +330,14 @@ export default function ReportDetail() {
       const response = await api.get(`/medical-reports/${reportId}/file`, {
         responseType: 'blob'
       })
-      
+
       const file = new Blob([response.data], { type: response.headers['content-type'] || 'application/pdf' })
       const fileURL = URL.createObjectURL(file)
       // window.open(fileURL, '_blank')
-      
+
       setModalFileData({ url: fileURL, type: response.headers['content-type'] || 'application/pdf', name: 'Original Report' })
       setShowFileModal(true)
-      
+
       toast.success('Original report loaded', { id: `fetch-file-${reportId}` })
     } catch (error) {
       console.error('Error fetching file:', error)
@@ -242,9 +374,7 @@ export default function ReportDetail() {
   }
 
   const handleDeleteReport = async () => {
-    if (!window.confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
-      return
-    }
+    setIsDeleteModalOpen(false)
 
     try {
       toast.loading('Deleting report...', { id: 'delete-report-detail' })
@@ -458,7 +588,7 @@ export default function ReportDetail() {
       if (val.diagnosis) return String(val.diagnosis);
       if (val.name) return String(val.name);
       if (val.description) return String(val.description);
-      
+
       try {
         return JSON.stringify(val);
       } catch (e) {
@@ -760,16 +890,7 @@ export default function ReportDetail() {
       red: 'bg-red-100 text-red-800 border-red-300'
     };
 
-    return (
-      <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${colors[validation.color]} ${className}`}>
-        <span className="text-xs">
-          {validation.color === 'green' ? '✅' :
-            validation.color === 'yellow' ? '⚠️' :
-              validation.color === 'blue' ? 'ℹ️' : '❌'}
-        </span>
-        <span>{Math.round(validation.confidence * 100)}%</span>
-      </div>
-    );
+
   };
 
   const isDoctor = userProfile?.role === 'DOCTOR'
@@ -784,6 +905,14 @@ export default function ReportDetail() {
         <p className="text-xs text-gray-500 mt-0.5">Generated on {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
         {aiAnalysis.analyzed_by && <p className="text-xs text-gray-400 mt-0.5">Analyzed by: {aiAnalysis.analyzed_by}</p>}
       </div>
+
+      {/* AI Medicine Info Modal */}
+      {selectedMedicineInfo && (
+        <MedicineInfoModal
+          info={selectedMedicineInfo}
+          onClose={() => setSelectedMedicineInfo(null)}
+        />
+      )}
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 print:px-0">
 
@@ -809,12 +938,12 @@ export default function ReportDetail() {
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
                   <h1 className="text-lg sm:text-2xl font-extrabold text-gray-900 leading-tight">Medical Report Analysis</h1>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${report.status === 'ANALYZED' ? 'bg-green-100 text-green-700 border border-green-200' :
-                      report.status === 'REVIEWING' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
-                        'bg-gray-100 text-gray-600 border border-gray-200'
+                    report.status === 'REVIEWING' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                      'bg-gray-100 text-gray-600 border border-gray-200'
                     }`}>{report.status}</span>
                 </div>
                 <p className="text-sm sm:text-base font-medium text-gray-600 truncate mb-3">{report.file_name}</p>
-                
+
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs font-medium text-gray-500">
                   <span className="flex items-center gap-1.5 whitespace-nowrap bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
                     <Calendar className="w-3.5 h-3.5 text-gray-400" />
@@ -834,17 +963,15 @@ export default function ReportDetail() {
               <div className="flex flex-wrap items-center justify-center sm:justify-start lg:justify-end gap-2">
                 {aiAnalysis.severity_level && (
                   <div className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm border ${getSeverityColor(aiAnalysis.severity_level)}`}>
-                    <span className="text-sm">{getSeverityIcon(aiAnalysis.severity_level)}</span>
                     <span className="uppercase tracking-tight">{aiAnalysis.severity_level}</span>
                   </div>
                 )}
                 {Object.keys(aiAnalysis).length > 0 && (
                   <div className={`px-2.5 py-1.5 rounded-lg text-xs font-bold shadow-sm border ${dataCompleteness.quality === 'excellent' ? 'bg-green-50 text-green-700 border-green-200' :
-                      dataCompleteness.quality === 'good' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                        dataCompleteness.quality === 'fair' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                          'bg-red-50 text-red-700 border-red-200'
+                    dataCompleteness.quality === 'good' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                      dataCompleteness.quality === 'fair' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                        'bg-red-50 text-red-700 border-red-200'
                     }`}>
-                    DATA: {dataCompleteness.overall}%
                   </div>
                 )}
               </div>
@@ -854,7 +981,7 @@ export default function ReportDetail() {
                 {/* Patient / Admin only: delete */}
                 {!isDoctor && (userProfile?.id === report?.patient_id || userProfile?.role === 'ADMIN') && (
                   <button
-                    onClick={handleDeleteReport}
+                    onClick={() => setIsDeleteModalOpen(true)}
                     className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-all hover:scale-[1.02] active:scale-95"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -876,13 +1003,12 @@ export default function ReportDetail() {
                   <button
                     onClick={triggerAIAnalysis}
                     disabled={analyzing}
-                    className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold shadow-md transition-all hover:scale-[1.02] active:scale-95 ${
-                      analyzing 
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' 
-                        : (!aiAnalysis || Object.keys(aiAnalysis).length === 0)
-                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-500/20'
-                          : 'bg-white text-blue-600 border border-blue-200 hover:bg-blue-50'
-                    }`}
+                    className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold shadow-md transition-all hover:scale-[1.02] active:scale-95 ${analyzing
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                      : (!aiAnalysis || Object.keys(aiAnalysis).length === 0)
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-500/20'
+                        : 'bg-white text-blue-600 border border-blue-200 hover:bg-blue-50'
+                      }`}
                   >
                     {analyzing ? (
                       <><div className="animate-spin rounded-full h-3 w-3 border-2 border-gray-300 border-t-transparent" />Analyzing...</>
@@ -891,7 +1017,7 @@ export default function ReportDetail() {
                     )}
                   </button>
                 )}
-                
+
                 {/* View Original File */}
                 <button
                   onClick={handleViewOriginal}
@@ -1060,8 +1186,8 @@ export default function ReportDetail() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all ${activeTab === tab.id
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -1083,15 +1209,15 @@ export default function ReportDetail() {
                 <button
                   onClick={() => setShowSummary(!showSummary)}
                   className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${showSummary
-                      ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                      : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700'
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                    : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700'
                     }`}
                 >
                   <TrendingUp className="w-3 h-3" />
                   Extraction Summary
                   <span className={`ml-0.5 ${dataCompleteness.quality === 'excellent' ? 'text-green-600' :
-                      dataCompleteness.quality === 'good' ? 'text-blue-600' :
-                        dataCompleteness.quality === 'fair' ? 'text-amber-600' : 'text-red-600'
+                    dataCompleteness.quality === 'good' ? 'text-blue-600' :
+                      dataCompleteness.quality === 'fair' ? 'text-amber-600' : 'text-red-600'
                     } font-semibold`}>{dataCompleteness.overall}%</span>
                   <ChevronDown className={`w-3 h-3 transition-transform ${showSummary ? 'rotate-180' : ''}`} />
                 </button>
@@ -1100,8 +1226,8 @@ export default function ReportDetail() {
                 <button
                   onClick={() => setShowAnalysis(!showAnalysis)}
                   className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${showAnalysis
-                      ? 'bg-purple-50 text-purple-700 border-purple-200'
-                      : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700'
+                    ? 'bg-purple-50 text-purple-700 border-purple-200'
+                    : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700'
                     }`}
                 >
                   <Brain className="w-3 h-3" />
@@ -1114,8 +1240,8 @@ export default function ReportDetail() {
                   <button
                     onClick={() => setShowExtractionInfo(!showExtractionInfo)}
                     className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${showExtractionInfo
-                        ? 'bg-sky-50 text-sky-700 border-sky-200'
-                        : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700'
+                      ? 'bg-sky-50 text-sky-700 border-sky-200'
+                      : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700'
                       }`}
                   >
                     <Activity className="w-3 h-3" />
@@ -1234,8 +1360,8 @@ export default function ReportDetail() {
                     </span>
                     {report.ai_analysis.extraction_info.ocr_quality_score != null && (
                       <span className={`px-2 py-1 rounded font-medium ${report.ai_analysis.extraction_info.ocr_quality_score >= 0.8 ? 'bg-green-50 text-green-700' :
-                          report.ai_analysis.extraction_info.ocr_quality_score >= 0.5 ? 'bg-amber-50 text-amber-700' :
-                            'bg-red-50 text-red-600'
+                        report.ai_analysis.extraction_info.ocr_quality_score >= 0.5 ? 'bg-amber-50 text-amber-700' :
+                          'bg-red-50 text-red-600'
                         }`}>OCR {Math.round(report.ai_analysis.extraction_info.ocr_quality_score * 100)}%</span>
                     )}
                   </div>
@@ -2461,6 +2587,20 @@ export default function ReportDetail() {
                                   <Pill className="w-5 h-5 text-purple-700" />
                                 </div>
                                 <h3 className="font-bold text-xl text-gray-900">{med.name}</h3>
+                                {isPatient && (
+                                  <button
+                                    onClick={() => handleFetchMedicineInfo(med.name)}
+                                    disabled={fetchingMedicineInfo === med.name}
+                                    title="Get AI Medicine Info"
+                                    className="ml-2 p-1.5 text-blue-500 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-50"
+                                  >
+                                    {fetchingMedicineInfo === med.name ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Info className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                )}
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className="px-3 py-1 bg-purple-500 text-white rounded-lg text-xs font-bold uppercase tracking-wide shadow-sm">
@@ -2725,7 +2865,7 @@ export default function ReportDetail() {
                 <div className="flex items-center gap-2">
                   {loadingHistory && <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>}
                   <button
-                    onClick={handleClearAIChat}
+                    onClick={() => setIsClearChatModalOpen(true)}
                     disabled={aiChatHistory.length === 0 || isAskingAI}
                     className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30"
                     title="Clear Chat History"
@@ -2759,11 +2899,10 @@ export default function ReportDetail() {
                             <span className="text-white text-[10px] font-bold">AI</span>
                           </div>
                         )}
-                        <div className={`max-w-[78%] rounded-2xl px-4 py-3 shadow-sm ${
-                          msg.role === 'user'
-                            ? 'bg-blue-600 text-white rounded-br-none'
-                            : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'
-                        }`}>
+                        <div className={`max-w-[78%] rounded-2xl px-4 py-3 shadow-sm ${msg.role === 'user'
+                          ? 'bg-blue-600 text-white rounded-br-none'
+                          : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'
+                          }`}>
                           {msg.role === 'assistant' ? (
                             <div className="text-sm leading-relaxed markdown-container">
                               <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -2773,9 +2912,8 @@ export default function ReportDetail() {
                           ) : (
                             <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                           )}
-                          <p className={`text-[10px] mt-2 text-right ${
-                            msg.role === 'user' ? 'text-blue-100' : 'text-gray-400'
-                          }`}>
+                          <p className={`text-[10px] mt-2 text-right ${msg.role === 'user' ? 'text-blue-100' : 'text-gray-400'
+                            }`}>
                             {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
@@ -2831,7 +2969,7 @@ export default function ReportDetail() {
                           const recognition = new SpeechRecognition();
                           recognition.continuous = false;
                           recognition.interimResults = true;
-                          
+
                           recognition.onstart = () => setIsListening(true);
                           recognition.onend = () => setIsListening(false);
                           recognition.onerror = () => setIsListening(false);
@@ -2842,14 +2980,13 @@ export default function ReportDetail() {
                               .join('');
                             setAiQuestion(transcript);
                           };
-                          
+
                           window._recognition = recognition;
                           recognition.start();
                         }}
                         disabled={isAskingAI || (!report.extracted_text && report.status !== 'ANALYZED')}
-                        className={`p-2 rounded-lg transition-all ${
-                          isListening ? 'text-red-600 bg-red-50 animate-pulse' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'
-                        }`}
+                        className={`p-2 rounded-lg transition-all ${isListening ? 'text-red-600 bg-red-50 animate-pulse' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'
+                          }`}
                         title={isListening ? "Stop Listening" : "Start Voice Input"}
                       >
                         {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
@@ -2857,11 +2994,10 @@ export default function ReportDetail() {
                       <button
                         type="submit"
                         disabled={!aiQuestion.trim() || isAskingAI || (!report.extracted_text && report.status !== 'ANALYZED')}
-                        className={`p-2 rounded-lg transition-all ${
-                          !aiQuestion.trim() || isAskingAI || (!report.extracted_text && report.status !== 'ANALYZED')
-                            ? 'text-gray-300' 
-                            : 'text-blue-600 hover:bg-blue-50'
-                        }`}
+                        className={`p-2 rounded-lg transition-all ${!aiQuestion.trim() || isAskingAI || (!report.extracted_text && report.status !== 'ANALYZED')
+                          ? 'text-gray-300'
+                          : 'text-blue-600 hover:bg-blue-50'
+                          }`}
                       >
                         <Send className="w-5 h-5" />
                       </button>
@@ -2918,7 +3054,7 @@ export default function ReportDetail() {
                       <p className="text-blue-100 text-sm mt-1">Medical report has been successfully analyzed</p>
                       {analysisResults.analyzed_by && (
                         <div className="flex items-center gap-2 mt-2">
-                          
+
                         </div>
                       )}
                     </div>
@@ -3601,7 +3737,7 @@ export default function ReportDetail() {
           <p>Medical Report Analysis Platform | Confidential Medical Document</p>
           <p className="mt-1">⚕️ This AI analysis is for clinical decision support only. Final medical decisions must be made by licensed healthcare professionals.</p>
         </div>
-        
+
         {showFileModal && modalFileData && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
@@ -3653,6 +3789,32 @@ export default function ReportDetail() {
             </div>
           </div>
         )}
+
+        {/* Delete Report Confirmation */}
+        <ConfirmationModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={handleDeleteReport}
+          title="Delete Medical Report"
+          message="Are you sure you want to delete this report? This action is permanent and cannot be undone."
+          confirmLabel="Delete Report"
+          cancelLabel="Keep Report"
+          type="danger"
+          icon={Trash2}
+        />
+
+        {/* Clear Chat Confirmation */}
+        <ConfirmationModal
+          isOpen={isClearChatModalOpen}
+          onClose={() => setIsClearChatModalOpen(false)}
+          onConfirm={handleClearAIChat}
+          title="Clear AI Chat History"
+          message="Are you sure you want to clear your conversation with the AI? This cannot be recovered."
+          confirmLabel="Clear History"
+          cancelLabel="Keep Chat"
+          type="warning"
+          icon={Brain}
+        />
       </div>
     </div>
   )

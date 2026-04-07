@@ -4,6 +4,8 @@ import { useAuth } from '../contexts/FirebaseAuthContext'
 import { useForm } from 'react-hook-form'
 import { Eye, EyeOff, Mail, Lock, User, Stethoscope } from 'lucide-react'
 import LoadingSpinner from '../components/LoadingSpinner'
+import { authAPI } from '../services/api'
+import toast from 'react-hot-toast'
 
 const Register = () => {
   const { register: registerUser, loginWithGoogle, isAuthenticated, loading } = useAuth()
@@ -12,6 +14,7 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+  const [isEmailSent, setIsEmailSent] = useState(false)
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm()
   const password = watch('password')
@@ -25,13 +28,21 @@ const Register = () => {
   const onSubmit = async (data) => {
     setIsLoading(true)
     try {
-      const result = await registerUser(data.email, data.password, {
+      // Use the new backend verification flow
+      const response = await authAPI.signupRequest({
+        email: data.email,
+        password: data.password,
         name: data.name,
         role: data.role
       })
-      if (result.success) return
+
+      if (response.data.success) {
+        setIsEmailSent(true)
+        toast.success('Verification email sent!')
+      }
     } catch (error) {
       console.error('Registration failed:', error)
+      toast.error(error.response?.data?.message || 'Registration failed')
     } finally {
       setIsLoading(false)
     }
@@ -40,12 +51,17 @@ const Register = () => {
   const handleGoogleSignUp = async () => {
     setIsGoogleLoading(true)
     try {
-      // Get the currently selected role from the form, default to PATIENT
-      const selectedRole = watch('role') || 'PATIENT'
+      // Get the currently selected role from the form
+      const selectedRole = watch('role')
+      if (!selectedRole) {
+        toast.error('Please select an account type first')
+        return
+      }
       const result = await loginWithGoogle(selectedRole)
       if (result.success) return
     } catch (error) {
       console.error('Google sign-up failed:', error)
+      toast.error('Google sign-up failed')
     } finally {
       setIsGoogleLoading(false)
     }
@@ -65,6 +81,35 @@ const Register = () => {
       icon: Stethoscope
     }
   ]
+
+  if (isEmailSent) {
+    return (
+      <div className="min-h-screen pt-16 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden font-sans">
+        <div className="absolute inset-0 z-0">
+          <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-primary-300 rounded-full mix-blend-multiply filter blur-[128px] opacity-40 animate-pulse-slow"></div>
+          <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-secondary-300 rounded-full mix-blend-multiply filter blur-[128px] opacity-40 animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
+        </div>
+
+        <div className="max-w-md w-full z-10 animate-fade-in-up uppercase">
+          <div className="bg-white/80 backdrop-blur-xl p-10 rounded-3xl shadow-glass border border-white/60 text-center">
+            <div className="mx-auto w-20 h-20 bg-green-100 rounded-2xl flex items-center justify-center mb-8">
+              <Mail className="w-10 h-10 text-green-600" />
+            </div>
+            <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-4">Check Your Email</h2>
+            <p className="text-gray-600 font-medium leading-relaxed">
+              We've sent a verification link to <span className="text-primary-600 font-bold block mt-1">{watch('email')}</span>
+            </p>
+            <div className="mt-10 pt-8 border-t border-gray-100">
+              <p className="text-sm text-gray-500 mb-6">Didn't receive the email? Check your spam folder.</p>
+              <Link to="/login" className="btn-primary inline-block px-8 py-3 text-sm font-bold tracking-wide">
+                Go to Login
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen pt-16 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden font-sans">

@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../contexts/FirebaseAuthContext'
 import { toast } from 'react-hot-toast'
 import api from '../services/api'
+import ConfirmationModal from '../components/ConfirmationModal'
 
 export default function Notifications() {
   const { isAuthenticated } = useAuth()
@@ -15,6 +16,7 @@ export default function Notifications() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all') // all, unread, read
   const [deleting, setDeleting] = useState(null)
+  const [isDeleteAllReadModalOpen, setIsDeleteAllReadModalOpen] = useState(false)
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -74,17 +76,14 @@ export default function Notifications() {
   }
 
   const deleteAllRead = async () => {
+    setIsDeleteAllReadModalOpen(false)
+    const readNotifications = notifications.filter(n => n.is_read)
+    if (readNotifications.length === 0) {
+      toast.error('No read notifications to delete')
+      return
+    }
+
     try {
-      const readNotifications = notifications.filter(n => n.is_read)
-      if (readNotifications.length === 0) {
-        toast.error('No read notifications to delete')
-        return
-      }
-
-      if (!window.confirm(`Delete ${readNotifications.length} read notifications?`)) {
-        return
-      }
-
       await Promise.all(
         readNotifications.map(n => api.delete(`/notifications/${n.id}`))
       )
@@ -253,7 +252,7 @@ export default function Notifications() {
               )}
               {notifications.filter(n => n.is_read).length > 0 && (
                 <button
-                  onClick={deleteAllRead}
+                  onClick={() => setIsDeleteAllReadModalOpen(true)}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -384,6 +383,18 @@ export default function Notifications() {
           </div>
         )}
       </div>
+
+      <ConfirmationModal
+        isOpen={isDeleteAllReadModalOpen}
+        onClose={() => setIsDeleteAllReadModalOpen(false)}
+        onConfirm={deleteAllRead}
+        title="Delete Read Notifications"
+        message={`Are you sure you want to delete all ${notifications.filter(n => n.is_read).length} read notifications? This action cannot be undone.`}
+        confirmLabel="Delete All Read"
+        cancelLabel="Keep Notifications"
+        type="danger"
+        icon={Trash2}
+      />
     </div>
   )
 }

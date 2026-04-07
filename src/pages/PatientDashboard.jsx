@@ -5,6 +5,7 @@ import { Upload, FileText, Activity, MessageSquare, AlertCircle, CheckCircle, Cl
 import { toast } from 'react-hot-toast'
 import api from '../services/api'
 import AnalysisProgressCard from '../components/AnalysisProgressCard'
+import ConfirmationModal from '../components/ConfirmationModal'
 
 export default function PatientDashboard() {
   const { userProfile } = useAuth()
@@ -20,6 +21,8 @@ export default function PatientDashboard() {
   })
   const [showFileModal, setShowFileModal] = useState(false)
   const [modalFileData, setModalFileData] = useState(null)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [reportToDelete, setReportToDelete] = useState(null)
 
   const pollRef = useRef(null)
 
@@ -121,14 +124,13 @@ export default function PatientDashboard() {
     }
   }
 
-  const handleDeleteReport = async (reportId) => {
-    if (!window.confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
-      return
-    }
+  const handleDeleteReport = async () => {
+    if (!reportToDelete) return
+    setIsDeleteModalOpen(false)
     
     try {
       toast.loading('Deleting report...', { id: 'delete-report' })
-      const response = await api.delete(`/medical-reports/${reportId}`)
+      const response = await api.delete(`/medical-reports/${reportToDelete}`)
       
       if (response.data.success) {
         toast.success('Report deleted successfully', { id: 'delete-report' })
@@ -140,6 +142,8 @@ export default function PatientDashboard() {
     } catch (error) {
       console.error('Error deleting report:', error)
       toast.error('Failed to delete report', { id: 'delete-report' })
+    } finally {
+      setReportToDelete(null)
     }
   }
 
@@ -413,7 +417,8 @@ export default function PatientDashboard() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDeleteReport(report.id);
+                        setReportToDelete(report.id);
+                        setIsDeleteModalOpen(true);
                       }}
                       className="btn-outline w-full sm:w-auto lg:w-full flex items-center justify-center text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-all shadow-sm"
                     >
@@ -493,6 +498,22 @@ export default function PatientDashboard() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false)
+          setReportToDelete(null)
+        }}
+        onConfirm={handleDeleteReport}
+        title="Delete Medical Report"
+        message="Are you sure you want to delete this report? This action is permanent and cannot be undone."
+        confirmLabel="Delete Report"
+        cancelLabel="Keep Report"
+        type="danger"
+        icon={Trash2}
+      />
     </div>
   )
 }

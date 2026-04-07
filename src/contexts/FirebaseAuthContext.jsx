@@ -5,11 +5,13 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   signOut,
-  onAuthStateChanged 
+  onAuthStateChanged,
+  getAdditionalUserInfo
 } from 'firebase/auth'
 import { auth } from '../config/firebase'
 import { authAPI } from '../services/api'
 import toast from 'react-hot-toast'
+import GoogleRoleModal from '../components/GoogleRoleModal'
 
 const AuthContext = createContext({})
 
@@ -25,6 +27,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [userProfile, setUserProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [rolePromise, setRolePromise] = useState(null)
   const profileFetchedRef = useRef(false)
 
   useEffect(() => {
@@ -93,16 +96,27 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const loginWithGoogle = async (role = 'PATIENT') => {
+  const loginWithGoogle = async (role = null) => {
     try {
       setLoading(true)
       const googleProvider = new GoogleAuthProvider()
       googleProvider.setCustomParameters({ prompt: 'select_account' })
       
       const result = await signInWithPopup(auth, googleProvider)
+      const additionalInfo = getAdditionalUserInfo(result)
+      
+      let finalRole = role;
+      if (additionalInfo?.isNewUser && !finalRole) {
+        // Pause execution and show the beautiful UI modal
+        finalRole = await new Promise((resolve) => {
+          setRolePromise({ resolve });
+        });
+      } else if (!finalRole) {
+        finalRole = 'PATIENT';
+      }
       
       // Pass role so doctor Google sign-ups get the right role
-      const response = await authAPI.autoRegister({ role })
+      const response = await authAPI.autoRegister({ role: finalRole })
       if (response.data.success) {
         setUserProfile(response.data.user)
         profileFetchedRef.current = true
@@ -132,6 +146,9 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true)
       
+      // Prevent onAuthStateChanged from double-fetching and creating a race condition
+      profileFetchedRef.current = true;
+      
       const result = await createUserWithEmailAndPassword(auth, email, password)
       
       const registrationData = {
@@ -153,6 +170,16 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Registration error:', error)
+      
+      // If Firebase user was created but backend failed, clean up the Firebase user
+      if (auth.currentUser) {
+        try {
+          await auth.currentUser.delete()
+        } catch (delError) {
+          console.error("Cleanup of Firebase user failed:", delError)
+        }
+      }
+
       let message = 'Registration failed'
       
       if (error.code === 'auth/email-already-in-use') {
@@ -232,6 +259,15 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={value}>
       {children}
+      <GoogleRoleModal 
+        isOpen={!!rolePromise} 
+        onSelectRole={(selectedRole) => {
+          if (rolePromise) {
+            rolePromise.resolve(selectedRole);
+            setRolePromise(null);
+          }
+        }} 
+      />
     </AuthContext.Provider>
   )
 }
