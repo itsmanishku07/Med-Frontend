@@ -26,7 +26,9 @@ const DoctorProfile = lazy(() => import('./pages/DoctorProfile'))
 const MyAppointments = lazy(() => import('./pages/MyAppointments'))
 const DoctorAppointments = lazy(() => import('./pages/DoctorAppointments'))
 const DoctorAvailability = lazy(() => import('./pages/DoctorAvailability'))
+const DoctorAvailabilityCalendar = lazy(() => import('./pages/DoctorAvailabilityCalendar'))
 const SystemLogs = lazy(() => import('./pages/SystemLogs'))
+const DatabaseAdmin = lazy(() => import('./pages/DatabaseAdmin'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 function App() {
@@ -139,9 +141,21 @@ function App() {
                       </ProtectedRoute>
                     } />
 
+                    <Route path="/doctor-availability-calendar" element={
+                      <ProtectedRoute allowedRoles={['DOCTOR']}>
+                        <DoctorAvailabilityCalendar />
+                      </ProtectedRoute>
+                    } />
+
                     <Route path="/system-logs" element={
                       <ProtectedRoute allowedRoles={['ADMIN']}>
                         <SystemLogs />
+                      </ProtectedRoute>
+                    } />
+
+                    <Route path="/database-admin" element={
+                      <ProtectedRoute allowedRoles={['ADMIN']}>
+                        <DatabaseAdmin />
                       </ProtectedRoute>
                     } />
                     

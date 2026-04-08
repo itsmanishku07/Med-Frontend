@@ -1,2 +1,0 @@
-import{u as i,b as n,r as c,j as s,e as t}from"./index-DZ5E7ebQ.js";function d(){const{userProfile:a,loading:r}=i(),e=n();return c.useEffect(()=>{if(!r&&a)switch(a.role){case"PATIENT":e("/patient-dashboard",{replace:!0});break;case"DOCTOR":e("/doctor-dashboard",{replace:!0});break;case"ADMIN":e("/admin-dashboard",{replace:!0});break;default:e("/patient-dashboard",{replace:!0})}},[a,r,e]),r?s.jsx(t,{}):s.jsx("div",{className:"flex items-center justify-center min-h-screen",children:s.jsx(t,{})})}export{d as default};
-//# sourceMappingURL=Dashboard-Fw44jEgO.js.map

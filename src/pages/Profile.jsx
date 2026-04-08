@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../contexts/FirebaseAuthContext'
-import api from '../services/api'
+import { useNavigate } from 'react-router-dom'
+import api, { appointmentAPI } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import {
-  User, Mail, Phone, MapPin, Edit3, Save, X, Plus, Stethoscope, Camera
+  User, Mail, Phone, MapPin, Edit3, Save, X, Plus, Stethoscope, Camera, CheckCircle, Calendar, FileText, Eye
 } from 'lucide-react'
 
 const MEDICAL_SPECIALIZATIONS = [
@@ -19,10 +20,13 @@ const MEDICAL_SPECIALIZATIONS = [
 
 function Profile() {
   const { updateProfile: updateAuthProfile, userProfile } = useAuth()
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [profile, setProfile] = useState(null)
   const [editingSection, setEditingSection] = useState(null)
+  const [selectedAppointment, setSelectedAppointment] = useState(null)
+  const [showDetailsModal, setShowDetailsModal] = useState(false)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -34,10 +38,18 @@ function Profile() {
   const [specializations, setSpecializations] = useState([])
   const [showSpecializationDropdown, setShowSpecializationDropdown] = useState(false)
   const [selectedImage, setSelectedImage] = useState(null)
+  const [completedCases, setCompletedCases] = useState([])
+  const [loadingCases, setLoadingCases] = useState(false)
 
   useEffect(() => {
     loadProfile()
   }, [])
+
+  useEffect(() => {
+    if (profile?.role === 'DOCTOR' && profile?.id) {
+      fetchCompletedCases()
+    }
+  }, [profile?.id, profile?.role])
 
   const loadProfile = async () => {
     try {
@@ -60,6 +72,29 @@ function Profile() {
       toast.error('Failed to load profile')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchCompletedCases = async () => {
+    if (!profile?.id) {
+      console.log('Profile ID not available yet')
+      return
+    }
+    
+    try {
+      setLoadingCases(true)
+      console.log('Fetching completed cases for doctor ID:', profile.id)
+      const response = await appointmentAPI.getDoctorCompletedCases(profile.id)
+      console.log('Completed cases response:', response.data)
+      if (response.data.success) {
+        setCompletedCases(response.data.completed_cases || [])
+        console.log('Completed cases loaded:', response.data.completed_cases?.length || 0)
+      }
+    } catch (error) {
+      console.error('Error fetching completed cases:', error)
+      toast.error('Failed to load completed cases')
+    } finally {
+      setLoadingCases(false)
     }
   }
 
@@ -156,6 +191,16 @@ function Profile() {
 
   const removeSpecialization = (spec) => {
     setSpecializations(specializations.filter(s => s !== spec))
+  }
+
+  const handleViewDetails = (appointment) => {
+    setSelectedAppointment(appointment)
+    setShowDetailsModal(true)
+  }
+
+  const handleViewReport = (reportId) => {
+    setShowDetailsModal(false)
+    navigate(`/report/${reportId}`)
   }
 
   if (loading) {
@@ -469,6 +514,220 @@ function Profile() {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Completed Cases Section for Doctors */}
+      {isDoctor && (
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+              <CheckCircle className="w-5 h-5 mr-2 text-green-600" />
+              Accepted & Completed Cases
+            </h2>
+            <span className="px-3 py-1 bg-green-50 text-green-700 rounded-lg text-sm font-semibold">
+              {completedCases.length} Cases
+            </span>
+          </div>
+          
+          {loadingCases ? (
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner size="large" />
+            </div>
+          ) : completedCases.length === 0 ? (
+            <div className="text-center py-12">
+              <CheckCircle className="w-16 h-16 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">No accepted or completed cases yet</p>
+              <p className="text-sm text-gray-400 mt-1">
+                Your accepted and completed appointments will appear here
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {completedCases.map((appointment) => (
+                <div
+                  key={appointment.id}
+                  className="p-4 border border-gray-200 rounded-xl hover:shadow-md transition"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-900">
+                        {appointment.patient_name}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <p className="text-sm text-gray-500">
+                          {appointment.scheduled_at
+                            ? new Date(appointment.scheduled_at).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })
+                            : 'Not scheduled'}
+                        </p>
+                      </div>
+                      {appointment.patient_reports && appointment.patient_reports.length > 0 && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <FileText className="w-4 h-4 text-blue-500" />
+                          <p className="text-xs text-blue-600 font-medium">
+                            {appointment.patient_reports.length} Report{appointment.patient_reports.length !== 1 ? 's' : ''}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <span
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+                          appointment.status === 'COMPLETED'
+                            ? 'bg-blue-50 text-blue-700'
+                            : 'bg-green-50 text-green-700'
+                        }`}
+                      >
+                        {appointment.status}
+                      </span>
+                      <button
+                        onClick={() => handleViewDetails(appointment)}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs font-medium transition"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        See Details
+                      </button>
+                    </div>
+                  </div>
+                  {appointment.notes && (
+                    <div className="mt-2 p-2 bg-gray-50 rounded-lg">
+                      <p className="text-xs text-gray-500 font-medium">Patient Notes:</p>
+                      <p className="text-sm text-gray-700 mt-1 line-clamp-2">{appointment.notes}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Appointment Details Modal */}
+      {showDetailsModal && selectedAppointment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900">Appointment Details</h3>
+              <button
+                onClick={() => setShowDetailsModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              {/* Patient Info */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-3">Patient Information</h4>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-lg font-bold text-gray-900">{selectedAppointment.patient_name}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <p className="text-sm text-gray-600">
+                      {selectedAppointment.scheduled_at
+                        ? new Date(selectedAppointment.scheduled_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })
+                        : 'Not scheduled'}
+                    </p>
+                  </div>
+                  <div className="mt-2">
+                    <span
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+                        selectedAppointment.status === 'COMPLETED'
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'bg-green-50 text-green-700'
+                      }`}
+                    >
+                      {selectedAppointment.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes */}
+              {selectedAppointment.notes && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Patient Notes</h4>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-gray-700">{selectedAppointment.notes}</p>
+                  </div>
+                </div>
+              )}
+
+              {selectedAppointment.doctor_notes && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Your Notes</h4>
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <p className="text-blue-900">{selectedAppointment.doctor_notes}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Patient Reports */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                  Patient Medical Reports
+                </h4>
+                {selectedAppointment.patient_reports && selectedAppointment.patient_reports.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedAppointment.patient_reports.map((report) => (
+                      <div
+                        key={report.id}
+                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">{report.file_name}</p>
+                          <div className="flex items-center gap-3 mt-1">
+                            {report.medical_specialty && (
+                              <span className="text-xs text-gray-500">
+                                {report.medical_specialty}
+                              </span>
+                            )}
+                            <span className={`text-xs px-2 py-0.5 rounded ${
+                              report.status === 'REVIEWED' ? 'bg-green-100 text-green-700' :
+                              report.status === 'ANALYZED' ? 'bg-blue-100 text-blue-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`}>
+                              {report.status}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              {new Date(report.uploaded_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleViewReport(report.id)}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition"
+                        >
+                          <Eye className="w-4 h-4" />
+                          View Report
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <FileText className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                    <p className="text-gray-500 text-sm">No reports available for this patient</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

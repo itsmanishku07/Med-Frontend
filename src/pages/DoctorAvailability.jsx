@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, Plus, Trash2, X, AlertCircle, Info } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Calendar, Clock, Plus, Trash2, X, AlertCircle, Info, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 
 const DoctorAvailability = () => {
+  const navigate = useNavigate();
   const [availabilitySlots, setAvailabilitySlots] = useState([]);
   const [blockedDates, setBlockedDates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showBlockDate, setShowBlockDate] = useState(false);
   const [editingDay, setEditingDay] = useState(null);
+  const [currentWeekOffset, setCurrentWeekOffset] = useState(0); // 0 = current week, -1 = last week, 1 = next week
+  const [weekDates, setWeekDates] = useState([]);
 
   const [newBlockedDate, setNewBlockedDate] = useState({
     date: '',
@@ -17,6 +21,26 @@ const DoctorAvailability = () => {
 
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const timeSlots = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`);
+
+  // Calculate week dates based on offset
+  useEffect(() => {
+    const today = new Date();
+    const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay; // Get to Monday
+    
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + mondayOffset + (currentWeekOffset * 7));
+    monday.setHours(0, 0, 0, 0);
+    
+    const dates = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i);
+      dates.push(date);
+    }
+    
+    setWeekDates(dates);
+  }, [currentWeekOffset]);
 
   useEffect(() => {
     fetchAvailability();
@@ -108,6 +132,41 @@ const DoctorAvailability = () => {
 
   const getDaySlots = (day) => {
     return availabilitySlots.filter(slot => slot.day_of_week === day);
+  };
+
+  const getWeekLabel = () => {
+    if (weekDates.length === 0) return 'Current Week';
+    
+    const firstDate = weekDates[0];
+    const lastDate = weekDates[6];
+    
+    const formatDate = (date) => {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+    
+    if (currentWeekOffset === 0) {
+      return `This Week (${formatDate(firstDate)} - ${formatDate(lastDate)})`;
+    } else if (currentWeekOffset === -1) {
+      return `Last Week (${formatDate(firstDate)} - ${formatDate(lastDate)})`;
+    } else if (currentWeekOffset === 1) {
+      return `Next Week (${formatDate(firstDate)} - ${formatDate(lastDate)})`;
+    } else if (currentWeekOffset < 0) {
+      return `${Math.abs(currentWeekOffset)} Weeks Ago (${formatDate(firstDate)} - ${formatDate(lastDate)})`;
+    } else {
+      return `${currentWeekOffset} Weeks Ahead (${formatDate(firstDate)} - ${formatDate(lastDate)})`;
+    }
+  };
+
+  const goToPreviousWeek = () => {
+    setCurrentWeekOffset(prev => prev - 1);
+  };
+
+  const goToNextWeek = () => {
+    setCurrentWeekOffset(prev => prev + 1);
+  };
+
+  const goToCurrentWeek = () => {
+    setCurrentWeekOffset(0);
   };
 
   const QuickAddModal = ({ day, onClose }) => {
@@ -202,10 +261,60 @@ const DoctorAvailability = () => {
   return (
     <div className="min-h-screen pt-20 pb-8 bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {}
-        <div className="mb-6">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">My Availability</h1>
-          <p className="text-gray-600">Manage your weekly schedule and blocked dates</p>
+        {/* Header */}
+        <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">My Availability</h1>
+            <p className="text-gray-600">Manage your weekly schedule and blocked dates</p>
+          </div>
+          <button
+            onClick={() => navigate('/doctor-availability-calendar')}
+            className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition font-semibold shadow-sm w-full sm:w-auto justify-center"
+          >
+            <CalendarDays className="w-4 h-4" />
+            Calendar View
+          </button>
+        </div>
+
+        {/* Week Navigation */}
+        <div className="mb-6 bg-white rounded-2xl shadow-sm p-4">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={goToPreviousWeek}
+              className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition"
+            >
+              <ChevronLeft className="w-5 h-5" />
+              <span className="hidden sm:inline">Previous Week</span>
+            </button>
+            
+            <div className="text-center">
+              <div className="font-bold text-gray-900">{getWeekLabel()}</div>
+              {weekDates.length > 0 && (
+                <div className="text-sm text-gray-500 mt-1">
+                  {weekDates[0].toLocaleDateString('en-US', { year: 'numeric' })}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={goToNextWeek}
+              className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition"
+            >
+              <span className="hidden sm:inline">Next Week</span>
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+          
+          {currentWeekOffset !== 0 && (
+            <div className="mt-3 text-center">
+              <button
+                onClick={goToCurrentWeek}
+                className="px-4 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition font-semibold"
+              >
+                Go to Current Week
+              </button>
+            </div>
+          )}
         </div>
 
         {}
@@ -226,13 +335,18 @@ const DoctorAvailability = () => {
         {}
         <div className="hidden lg:block bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
           <div className="grid grid-cols-7 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-            {daysOfWeek.map((day) => (
+            {daysOfWeek.map((day, index) => (
               <div
                 key={day}
                 className="p-4 text-center border-r border-gray-200 last:border-r-0"
               >
                 <div className="font-bold text-gray-900 text-lg">{day.substring(0, 3)}</div>
                 <div className="text-xs text-gray-600 mt-1">{day}</div>
+                {weekDates[index] && (
+                  <div className="text-xs text-blue-600 font-semibold mt-1">
+                    {weekDates[index].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -300,12 +414,19 @@ const DoctorAvailability = () => {
 
         {}
         <div className="lg:hidden space-y-3 mb-6">
-          {daysOfWeek.map((day) => {
+          {daysOfWeek.map((day, index) => {
             const slots = getDaySlots(day);
             return (
               <div key={day} className="bg-white rounded-2xl shadow-sm overflow-hidden">
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-gray-200">
-                  <h3 className="font-bold text-gray-900 text-lg">{day}</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-gray-900 text-lg">{day}</h3>
+                    {weekDates[index] && (
+                      <div className="text-sm text-blue-600 font-semibold">
+                        {weekDates[index].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="p-4">
                   {slots.length === 0 ? (

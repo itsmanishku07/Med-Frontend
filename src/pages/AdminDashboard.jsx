@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/FirebaseAuthContext'
-import { Users, FileText, Activity, AlertTriangle, TrendingUp, Clock, CheckCircle, XCircle, Search, Filter } from 'lucide-react'
+import { Users, FileText, Activity, AlertTriangle, TrendingUp, Clock, CheckCircle, XCircle, Search, Filter, Database } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import api from '../services/api'
 
@@ -104,9 +104,18 @@ export default function AdminDashboard() {
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Admin Dashboard</h1>
           <p className="text-gray-600 mt-2 font-medium">System management and analytics</p>
         </div>
-        <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-2">
-          <Activity className="w-5 h-5 text-primary-500 animate-pulse-slow" />
-          <span className="text-sm font-bold text-gray-700">System Status: <span className="text-green-500">Online</span></span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/database-admin')}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition shadow-sm font-semibold"
+          >
+            <Database className="w-5 h-5" />
+            Database Admin
+          </button>
+          <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-2">
+            <Activity className="w-5 h-5 text-primary-500 animate-pulse-slow" />
+            <span className="text-sm font-bold text-gray-700">System Status: <span className="text-green-500">Online</span></span>
+          </div>
         </div>
       </div>
 

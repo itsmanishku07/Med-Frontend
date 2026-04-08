@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Star, Mail, Phone, MapPin, Award, BookOpen, Clock, MessageSquare, Send, Loader2, ArrowLeft, Edit2, Trash2 } from 'lucide-react';
-import api from '../services/api';
+import { Star, Mail, Phone, MapPin, Award, BookOpen, Clock, MessageSquare, Send, Loader2, ArrowLeft, Edit2, Trash2, CheckCircle, Calendar } from 'lucide-react';
+import api, { appointmentAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/FirebaseAuthContext';
 import DoctorAvailabilityViewer from '../components/DoctorAvailabilityViewer';
@@ -16,6 +16,8 @@ export default function DoctorProfile() {
   const [stats, setStats] = useState({ average_rating: 0, total_reviews: 0 });
   const [myReview, setMyReview] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [completedCases, setCompletedCases] = useState([]);
+  const [loadingCases, setLoadingCases] = useState(false);
   
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [rating, setRating] = useState(0);
@@ -29,10 +31,16 @@ export default function DoctorProfile() {
   const [preferredTime, setPreferredTime] = useState('');
 
   const isPatient = userProfile?.role === 'PATIENT';
+  const isDoctor = userProfile?.role === 'DOCTOR';
+  const isOwnProfile = isDoctor && userProfile?.id === doctorId;
 
   useEffect(() => {
     fetchDoctorData();
-  }, [doctorId]);
+    if (isOwnProfile) {
+      console.log('Fetching completed cases for doctor:', doctorId);
+      fetchCompletedCases();
+    }
+  }, [doctorId, isOwnProfile]);
 
   const fetchDoctorData = async () => {
     try {
@@ -64,6 +72,23 @@ export default function DoctorProfile() {
       toast.error('Failed to load doctor profile');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCompletedCases = async () => {
+    try {
+      setLoadingCases(true);
+      console.log('Calling API for completed cases:', doctorId);
+      const response = await appointmentAPI.getDoctorCompletedCases(doctorId);
+      console.log('Completed cases response:', response.data);
+      if (response.data.success) {
+        setCompletedCases(response.data.completed_cases || []);
+      }
+    } catch (error) {
+      console.error('Error fetching completed cases:', error);
+      toast.error('Failed to load completed cases');
+    } finally {
+      setLoadingCases(false);
     }
   };
 
@@ -321,6 +346,78 @@ export default function DoctorProfile() {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {isOwnProfile && (
+              <div className="bg-white rounded-2xl shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-gray-900">Accepted & Completed Cases</h3>
+                  <span className="px-3 py-1 bg-green-50 text-green-700 rounded-lg text-sm font-semibold">
+                    {completedCases.length} Cases
+                  </span>
+                </div>
+                {loadingCases ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+                  </div>
+                ) : completedCases.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CheckCircle className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">No accepted or completed cases yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {completedCases.map((appointment) => (
+                      <div
+                        key={appointment.id}
+                        className="p-4 border border-gray-200 rounded-xl hover:shadow-md transition"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-900 text-sm">
+                              {appointment.patient_name}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                              <p className="text-xs text-gray-500">
+                                {appointment.scheduled_at
+                                  ? new Date(appointment.scheduled_at).toLocaleDateString('en-US', {
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })
+                                  : 'Not scheduled'}
+                              </p>
+                            </div>
+                          </div>
+                          <span
+                            className={`px-2 py-1 rounded-lg text-xs font-semibold ${
+                              appointment.status === 'COMPLETED'
+                                ? 'bg-blue-50 text-blue-700'
+                                : 'bg-green-50 text-green-700'
+                            }`}
+                          >
+                            {appointment.status}
+                          </span>
+                        </div>
+                        {appointment.notes && (
+                          <p className="text-xs text-gray-600 mt-2 line-clamp-2">
+                            {appointment.notes}
+                          </p>
+                        )}
+                        {appointment.doctor_notes && (
+                          <div className="mt-2 p-2 bg-blue-50 rounded-lg">
+                            <p className="text-xs text-blue-900 font-medium">Your Notes:</p>
+                            <p className="text-xs text-blue-700 mt-1">{appointment.doctor_notes}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

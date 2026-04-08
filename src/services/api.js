@@ -115,4 +115,23 @@ export const medicineReminderAPI = {
   getMedicineInfo: (id) => api.get(`/medicine-reminders/${id}/info`),
 }
 
+export const appointmentAPI = {
+  requestAppointment: (data) => api.post('/appointments/request', data),
+  getPatientAppointments: () => api.get('/appointments/patient'),
+  getDoctorAppointments: () => api.get('/appointments/doctor'),
+  updateAppointmentStatus: (id, data) => api.put(`/appointments/${id}/status`, data),
+  getDoctorCompletedCases: (doctorId) => api.get(`/appointments/doctor/${doctorId}/completed-cases`),
+}
+
+export const databaseAdminAPI = {
+  getAllTables: () => api.get('/database-admin/tables'),
+  getTableData: (tableName, page = 1, perPage = 50) => 
+    api.get(`/database-admin/tables/${tableName}`, { params: { page, per_page: perPage } }),
+  getTableSchema: (tableName) => api.get(`/database-admin/tables/${tableName}/schema`),
+  deleteRecord: (tableName, recordId) => api.delete(`/database-admin/tables/${tableName}/record/${recordId}`),
+  clearTable: (tableName) => api.delete(`/database-admin/tables/${tableName}/clear`, { params: { confirm: 'yes' } }),
+  deleteReport: (reportId) => api.delete(`/database-admin/reports/${reportId}`),
+  deleteUser: (userId) => api.delete(`/database-admin/users/${userId}`),
+}
+
 export default api
