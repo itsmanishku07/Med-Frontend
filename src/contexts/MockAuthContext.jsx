@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }) => {
       uid: userData.uid,
       email: userData.email,
       role: userData.role,
-      exp: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+      exp: Date.now() + (24 * 60 * 60 * 1000)
     }))
   }
 

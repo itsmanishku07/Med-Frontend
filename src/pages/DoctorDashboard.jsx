@@ -169,7 +169,7 @@ export default function DoctorDashboard() {
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="card p-6 flex items-center justify-between group">
           <div>
@@ -212,7 +212,7 @@ export default function DoctorDashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
+      {}
       <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
         <button
           onClick={() => navigate('/doctor-appointments')}
@@ -257,9 +257,9 @@ export default function DoctorDashboard() {
         </button>
       </div>
 
-      {/* View & Filter Controls */}
+      {}
       <div className="mb-6 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-        {/* Main View Tabs */}
+        {}
         <div className="bg-white/60 backdrop-blur-md p-1.5 rounded-2xl shadow-sm border border-gray-100 flex inline-flex">
           <button
             onClick={() => setViewMode('ACTIVE')}
@@ -285,7 +285,7 @@ export default function DoctorDashboard() {
           </button>
         </div>
 
-        {/* Priority Filters - Only show when ACTIVE */}
+        {}
         {viewMode === 'ACTIVE' && (
           <div className="bg-white/60 backdrop-blur-md p-1.5 rounded-2xl shadow-sm border border-gray-100 flex gap-2 overflow-x-auto inline-flex">
             {['ALL', 'CRITICAL', 'HIGH', 'PENDING'].map((filterOption) => (
@@ -310,7 +310,7 @@ export default function DoctorDashboard() {
         )}
       </div>
 
-      {/* Patient Assignments */}
+      {}
       <div className="card overflow-hidden">
         <div className="p-6 border-b border-gray-100 bg-gray-50/50">
           <h2 className="text-xl font-bold text-gray-900">Patient Assignments</h2>

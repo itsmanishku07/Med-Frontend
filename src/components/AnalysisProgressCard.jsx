@@ -8,14 +8,13 @@ const STAGES = [
   { id: 'matching', label: 'Matching specialist', icon: UserCheck, weight: 15 },
 ]
 
-// Cumulative % at end of each stage
 const STAGE_ENDS = STAGES.reduce((acc, s, i) => {
   acc.push((i === 0 ? 0 : acc[i - 1]) + s.weight)
   return acc
 }, [])
 
-const TOTAL_MS = 30_000   // expected total backend duration
-const STALL_AT = 90       // hold here until real ANALYZED arrives
+const TOTAL_MS = 30_000
+const STALL_AT = 90
 const TICK_MS = 400
 
 const calcProgress = (elapsedMs) =>
@@ -28,11 +27,7 @@ const calcStage = (pct) => {
   return STAGES.length - 1
 }
 
-/**
- * Props:
- *   status     – 'PENDING' | 'ANALYZING' | 'ANALYZED' | 'FAILED'
- *   uploadedAt – ISO string of when the report was created
- */
+
 export default function AnalysisProgressCard({ status, uploadedAt }) {
   const getElapsed = () =>
     uploadedAt ? Date.now() - new Date(uploadedAt).getTime() : 0
@@ -44,7 +39,6 @@ export default function AnalysisProgressCard({ status, uploadedAt }) {
   const timerRef = useRef(null)
 
   useEffect(() => {
-    // Terminal states — stop everything
     if (status === 'ANALYZED') {
       clearInterval(timerRef.current)
       timerRef.current = null
@@ -61,7 +55,6 @@ export default function AnalysisProgressCard({ status, uploadedAt }) {
       return
     }
 
-    // Still in progress — start ticker only if not already running
     if (timerRef.current) return
 
     timerRef.current = setInterval(() => {
@@ -71,16 +64,14 @@ export default function AnalysisProgressCard({ status, uploadedAt }) {
     }, TICK_MS)
 
     return () => {
-      // Only clean up on unmount, not on every status change
     }
-  }, [status])                          // ← only re-run when status actually changes
+  }, [status])
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => clearInterval(timerRef.current)
   }, [])
 
-  /* ── FAILED ── */
+  
   if (failed) {
     return (
       <div className="mt-3 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
@@ -95,7 +86,7 @@ export default function AnalysisProgressCard({ status, uploadedAt }) {
     )
   }
 
-  /* ── DONE ── */
+  
   if (done) {
     return (
       <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-xl flex items-start gap-3">
@@ -110,7 +101,7 @@ export default function AnalysisProgressCard({ status, uploadedAt }) {
     )
   }
 
-  /* ── IN PROGRESS ── */
+  
   const currentStage = STAGES[stageIdx]
   const StageIcon = currentStage.icon
   const isStalled = progress >= STALL_AT
@@ -118,7 +109,7 @@ export default function AnalysisProgressCard({ status, uploadedAt }) {
   return (
     <div className="mt-3 p-4 bg-blue-50/60 border border-blue-200/70 rounded-xl space-y-3">
 
-      {/* Header row */}
+      {}
       <div className="flex items-center gap-2">
         <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
           {isStalled
@@ -141,7 +132,7 @@ export default function AnalysisProgressCard({ status, uploadedAt }) {
         </span>
       </div>
 
-      {/* Progress bar */}
+      {}
       <div className="relative h-2.5 bg-blue-100 rounded-full overflow-hidden">
         <div
           className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-600 rounded-full transition-all duration-500 ease-out"
@@ -150,7 +141,7 @@ export default function AnalysisProgressCard({ status, uploadedAt }) {
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer" />
       </div>
 
-      {/* Stage steps */}
+      {}
       <div className="flex items-center justify-between gap-1 pt-1">
         {STAGES.map((s, i) => {
           const SIcon = s.icon

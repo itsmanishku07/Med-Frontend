@@ -107,7 +107,6 @@ export const AuthProvider = ({ children }) => {
       
       let finalRole = role;
       if (additionalInfo?.isNewUser && !finalRole) {
-        // Pause execution and show the beautiful UI modal
         finalRole = await new Promise((resolve) => {
           setRolePromise({ resolve });
         });
@@ -115,7 +114,6 @@ export const AuthProvider = ({ children }) => {
         finalRole = 'PATIENT';
       }
       
-      // Pass role so doctor Google sign-ups get the right role
       const response = await authAPI.autoRegister({ role: finalRole })
       if (response.data.success) {
         setUserProfile(response.data.user)
@@ -146,7 +144,6 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true)
       
-      // Prevent onAuthStateChanged from double-fetching and creating a race condition
       profileFetchedRef.current = true;
       
       const result = await createUserWithEmailAndPassword(auth, email, password)
@@ -171,7 +168,6 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Registration error:', error)
       
-      // If Firebase user was created but backend failed, clean up the Firebase user
       if (auth.currentUser) {
         try {
           await auth.currentUser.delete()

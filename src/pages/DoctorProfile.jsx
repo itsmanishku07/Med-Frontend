@@ -177,7 +177,7 @@ export default function DoctorProfile() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Back Button */}
+        {}
         <button
           onClick={() => navigate('/doctors')}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 font-semibold transition"
@@ -187,9 +187,9 @@ export default function DoctorProfile() {
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Doctor Info */}
+          {}
           <div className="lg:col-span-1 space-y-6">
-            {/* Profile Card */}
+            {}
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
               <div className="h-32 bg-gradient-to-r from-blue-600 to-indigo-600" />
               <div className="px-6 pb-6">
@@ -226,7 +226,7 @@ export default function DoctorProfile() {
                     ))}
                   </div>
 
-                  {/* Rating Display */}
+                  {}
                   <div className="flex items-center justify-center gap-2 mb-4">
                     <div className="flex">
                       {[1, 2, 3, 4, 5].map((star) => (
@@ -249,7 +249,7 @@ export default function DoctorProfile() {
                   </div>
                 </div>
 
-                {/* Contact Info */}
+                {}
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center gap-3 text-sm">
                     <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
@@ -275,7 +275,7 @@ export default function DoctorProfile() {
                   )}
                 </div>
 
-                {/* Action Buttons */}
+                {}
                 {isPatient && (
                   <div className="space-y-3">
                     <button
@@ -297,7 +297,7 @@ export default function DoctorProfile() {
               </div>
             </div>
 
-            {/* Additional Info */}
+            {}
             {(profile.experience || profile.education) && (
               <div className="bg-white rounded-2xl shadow-sm p-6">
                 <h3 className="font-bold text-gray-900 mb-4">Professional Info</h3>
@@ -325,9 +325,9 @@ export default function DoctorProfile() {
             )}
           </div>
 
-          {/* Right Column - Reviews & Booking */}
+          {}
           <div className="lg:col-span-2 space-y-6">
-            {/* Booking Form */}
+            {}
             {isBooking && isPatient && (
               <div className="bg-white rounded-2xl shadow-sm p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-4">Request Appointment</h3>
@@ -379,7 +379,7 @@ export default function DoctorProfile() {
               </div>
             )}
 
-            {/* About */}
+            {}
             {profile.bio && (
               <div className="bg-white rounded-2xl shadow-sm p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-4">About</h3>
@@ -387,7 +387,7 @@ export default function DoctorProfile() {
               </div>
             )}
 
-            {/* Reviews Section */}
+            {}
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900">
@@ -404,7 +404,7 @@ export default function DoctorProfile() {
                 )}
               </div>
 
-              {/* Review Form */}
+              {}
               {showReviewForm && isPatient && (
                 <div className="mb-6 p-6 bg-blue-50 rounded-xl border-2 border-blue-100">
                   <h4 className="font-bold text-gray-900 mb-4">
@@ -456,7 +456,7 @@ export default function DoctorProfile() {
                 </div>
               )}
 
-              {/* Reviews List */}
+              {}
               <div className="space-y-4">
                 {reviews.length === 0 ? (
                   <div className="text-center py-12">
@@ -522,7 +522,7 @@ export default function DoctorProfile() {
         </div>
       </div>
 
-      {/* Availability Viewer Modal */}
+      {}
       <DoctorAvailabilityViewer
         isOpen={showAvailability}
         onClose={() => setShowAvailability(false)}

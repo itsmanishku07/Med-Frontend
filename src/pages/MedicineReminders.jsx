@@ -8,7 +8,6 @@ import ConfirmationModal from '../components/ConfirmationModal'
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const emptyForm = { medicine_name: '', dosage: '', reminder_time: '', days: [], notes: '' }
 
-// ── Continuous alarm — beeps every 2 s until stop() is called ────────────────
 function startContinuousAlarm() {
   let stopped = false
 
@@ -51,7 +50,6 @@ function showBrowserNotif(medicine, dosage) {
   }
 }
 
-// ── Full-screen alarm modal ───────────────────────────────────────────────────
 function AlarmModal({ alarm, onStop }) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -79,7 +77,6 @@ function AlarmModal({ alarm, onStop }) {
   )
 }
 
-// ── AI Medicine Info Modal ────────────────────────────────────────────────────
 function MedicineInfoModal({ info, onClose }) {
   if (!info) return null
 
@@ -102,7 +99,7 @@ function MedicineInfoModal({ info, onClose }) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-          {/* Professional Summary */}
+          {}
           <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
             <div className="flex items-center gap-2 mb-2 text-gray-900 font-semibold">
               <FileText className="w-4 h-4 text-blue-500" />
@@ -112,7 +109,7 @@ function MedicineInfoModal({ info, onClose }) {
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            {/* Benefits */}
+            {}
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-green-700 font-semibold">
                 <ShieldCheck className="w-4 h-4" />
@@ -128,7 +125,7 @@ function MedicineInfoModal({ info, onClose }) {
               </ul>
             </div>
 
-            {/* Side Effects */}
+            {}
             <div className="space-y-3 p-4 bg-orange-50/50 rounded-2xl border border-orange-100">
               <div className="flex items-center gap-2 text-orange-700 font-semibold">
                 <AlertTriangle className="w-4 h-4" />
@@ -144,7 +141,7 @@ function MedicineInfoModal({ info, onClose }) {
               </ul>
             </div>
 
-            {/* Dosage Timing */}
+            {}
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-blue-700 font-semibold">
                 <Timer className="w-4 h-4" />
@@ -153,7 +150,7 @@ function MedicineInfoModal({ info, onClose }) {
               <p className="text-sm text-gray-600 pl-6">{info.dosage_timing}</p>
             </div>
 
-            {/* When to Avoid */}
+            {}
             <div className="space-y-3 p-4 bg-red-50/50 rounded-2xl border border-red-100">
               <div className="flex items-center gap-2 text-red-700 font-semibold">
                 <AlertTriangle className="w-4 h-4" />
@@ -185,7 +182,6 @@ function MedicineInfoModal({ info, onClose }) {
   )
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
 export default function MedicineReminders() {
   const [reminders, setReminders] = useState([])
   const [loading, setLoading] = useState(true)
@@ -197,7 +193,7 @@ export default function MedicineReminders() {
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushLoading, setPushLoading] = useState(false)
   const [selectedInfo, setSelectedInfo] = useState(null)
-  const [fetchingInfo, setFetchingInfo] = useState(null) // ID of reminder being fetched
+  const [fetchingInfo, setFetchingInfo] = useState(null)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [reminderToDelete, setReminderToDelete] = useState(null)
   const firedRef = useRef(new Set())
@@ -214,7 +210,6 @@ export default function MedicineReminders() {
     }
   }, [])
 
-  // Check current push subscription state on mount
   useEffect(() => {
     fetchReminders()
     registerServiceWorker().then(async (reg) => {
@@ -245,7 +240,6 @@ export default function MedicineReminders() {
     }
   }
 
-  // ── Scheduler: checks every 30 s ──────────────────────────────────────────
   useEffect(() => {
     const check = () => {
       const now = new Date()
@@ -263,14 +257,12 @@ export default function MedicineReminders() {
         if (firedRef.current.has(fireKey)) return
         firedRef.current.add(fireKey)
 
-        // Stop any previous alarm, start new continuous one
         if (stopAlarmRef.current) stopAlarmRef.current()
         stopAlarmRef.current = startContinuousAlarm()
         setActiveAlarm(r)
         showBrowserNotif(r.medicine_name, r.dosage)
       })
 
-      // Reset fired set at the top of each hour (allows next-day re-fire)
       if (now.getMinutes() === 0 && now.getSeconds() < 35) {
         firedRef.current.clear()
       }
@@ -286,7 +278,6 @@ export default function MedicineReminders() {
     setActiveAlarm(null)
   }, [])
 
-  // ── Form helpers ──────────────────────────────────────────────────────────
   const toggleDay = (day) =>
     setForm(p => ({ ...p, days: p.days.includes(day) ? p.days.filter(d => d !== day) : [...p.days, day] }))
 
@@ -377,14 +368,14 @@ export default function MedicineReminders() {
 
   return (
     <>
-      {/* Continuous alarm modal */}
+      {}
       {activeAlarm && <AlarmModal alarm={activeAlarm} onStop={stopAlarm} />}
 
-      {/* AI Medicine Info Modal */}
+      {}
       {selectedInfo && <MedicineInfoModal info={selectedInfo} onClose={() => setSelectedInfo(null)} />}
 
       <div className="max-w-3xl mx-auto px-4 pt-24 pb-12">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-blue-100 rounded-xl">
@@ -404,7 +395,7 @@ export default function MedicineReminders() {
           </button>
         </div>
 
-        {/* Browser notification hint */}
+        {}
         {'Notification' in window && Notification.permission !== 'granted' && (
           <div className="mb-4 flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
             <Bell className="w-4 h-4 text-amber-600 shrink-0" />
@@ -415,7 +406,7 @@ export default function MedicineReminders() {
           </div>
         )}
 
-        {/* Background push toggle */}
+        {}
         {'serviceWorker' in navigator && 'PushManager' in window && (
           <div className={`mb-4 flex items-center justify-between gap-3 rounded-xl border px-4 py-3 ${pushEnabled ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
             <div className="flex items-center gap-2">
@@ -437,7 +428,7 @@ export default function MedicineReminders() {
           </div>
         )}
 
-        {/* Add / Edit Form */}
+        {}
         {showForm && (
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
@@ -506,7 +497,7 @@ export default function MedicineReminders() {
           </div>
         )}
 
-        {/* Reminders list */}
+        {}
         {reminders.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
             <AlarmCheck className="w-14 h-14 text-gray-300 mx-auto mb-3" />
@@ -519,14 +510,14 @@ export default function MedicineReminders() {
               <div key={r.id}
                 className={'bg-white rounded-2xl border shadow-sm p-4 flex items-center gap-4 transition-opacity ' +
                   (r.is_active ? 'border-gray-200' : 'border-gray-100 opacity-60')}>
-                {/* Time badge */}
+                {}
                 <div className={'shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-xl font-bold text-sm ' +
                   (r.is_active ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-400')}>
                   <Clock className="w-4 h-4 mb-0.5" />
                   {formatTime(r.reminder_time)}
                 </div>
 
-                {/* Info */}
+                {}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-semibold text-gray-900 truncate">{r.medicine_name}</p>
@@ -539,7 +530,7 @@ export default function MedicineReminders() {
                   {r.notes && <p className="text-xs text-gray-500 mt-0.5 italic">{r.notes}</p>}
                 </div>
 
-                {/* Actions */}
+                {}
                 <div className="flex items-center gap-1 shrink-0">
                   <button onClick={() => handleToggleActive(r)}
                     title={r.is_active ? 'Pause' : 'Enable'}

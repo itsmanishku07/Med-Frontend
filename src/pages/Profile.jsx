@@ -80,12 +80,10 @@ function Profile() {
       reader.onload = (event) => {
         const img = new Image()
         img.onload = () => {
-          // Create a canvas to resize/compress the image
           const canvas = document.createElement('canvas')
           let width = img.width
           let height = img.height
 
-          // Max dimensions for profile picture
           const MAX_WIDTH = 800
           const MAX_HEIGHT = 800
 
@@ -106,7 +104,6 @@ function Profile() {
           const ctx = canvas.getContext('2d')
           ctx.drawImage(img, 0, 0, width, height)
 
-          // Compress to JPEG with 0.7 quality
           const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7)
           setSelectedImage(compressedDataUrl)
         }

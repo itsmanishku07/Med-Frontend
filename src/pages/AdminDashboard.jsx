@@ -110,7 +110,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="card p-6 flex flex-col justify-between group relative overflow-hidden">
           <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-100 rounded-full opacity-50 blur-xl"></div>
@@ -173,7 +173,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Tabs */}
+      {}
       <div className="mb-6 bg-white/60 backdrop-blur-md p-2 rounded-2xl shadow-sm border border-gray-100 flex gap-2 overflow-x-auto inline-flex">
         {['overview', 'users', 'reports', 'analytics'].map((tab) => (
           <button
@@ -190,7 +190,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Content Area */}
+      {}
       {selectedTab === 'overview' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="card p-6">

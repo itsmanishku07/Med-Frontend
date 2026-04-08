@@ -15,7 +15,6 @@ const Navbar = () => {
   const isDoctor = userProfile?.role === 'DOCTOR'
   const isAdmin = userProfile?.role === 'ADMIN'
 
-  // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20)
@@ -24,7 +23,6 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Close mobile menu on route change
   useEffect(() => {
     setIsMobileMenuOpen(false)
   }, [location])
@@ -112,14 +110,14 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-12">
           
-          {/* Logo Area */}
+          {}
           <Link to="/" className="flex items-center group z-50 shrink-0">
             <div className="flex items-center justify-center group-hover:scale-105 transition-all duration-300">
               <img src="/logo.svg" alt="MedReport AI" className="h-14 w-auto" />
             </div>
           </Link>
 
-          {/* Desktop Navigation - Hidden on lg and smaller if items are many, but here we use lg as breakpoint */}
+          {}
           <div className="hidden lg:flex items-center justify-center flex-1 px-8 space-x-1">
             {navItems.filter(item => item.show).map((item) => {
               const Icon = item.icon
@@ -141,7 +139,7 @@ const Navbar = () => {
             })}
           </div>
 
-          {/* Right side actions - Desktop */}
+          {}
           <div className="hidden lg:flex items-center space-x-4 z-50">
             {isAuthenticated ? (
               <>
@@ -158,7 +156,7 @@ const Navbar = () => {
                     </span>
                   </button>
                   
-                  {/* Hover Dropdown */}
+                  {}
                   <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0">
                     <div className="p-4 border-b border-gray-50">
                       <p className="text-sm font-bold text-gray-900 truncate">{userProfile?.name}</p>
@@ -189,7 +187,7 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Mobile Menu Actions (Icons) */}
+          {}
           <div className="flex lg:hidden items-center space-x-3 z-50">
             {isAuthenticated && <NotificationBell />}
             <button
@@ -202,7 +200,7 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Backdrop Overlay */}
+      {}
       {isMobileMenuOpen && (
         <div 
           className="lg:hidden fixed inset-0 bg-gray-900/20 backdrop-blur-sm z-30 transition-opacity"
@@ -210,14 +208,14 @@ const Navbar = () => {
         />
       )}
 
-      {/* Mobile Menu Slider */}
+      {}
       <div className={`lg:hidden fixed inset-y-0 right-0 w-4/5 max-w-sm bg-white z-40 shadow-2xl transition-all duration-300 ease-in-out transform ${
         isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
       }`}>
         <div className="h-full flex flex-col pt-20 pb-6 px-6 overflow-y-auto">
           {isAuthenticated ? (
             <>
-              {/* Mobile Profile Header */}
+              {}
               <div className="mb-8 p-5 bg-gradient-to-br from-gray-50 to-white rounded-3xl border border-gray-100 shadow-sm">
                 <div className="flex items-center space-x-4">
                   <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-primary-500/20">
@@ -235,7 +233,7 @@ const Navbar = () => {
                 </div>
               </div>
 
-              {/* Mobile Nav Links */}
+              {}
               <div className="space-y-1 flex-1">
                 {navItems.filter(item => item.show).map((item) => {
                   const Icon = item.icon
@@ -258,7 +256,7 @@ const Navbar = () => {
                 })}
               </div>
 
-              {/* Mobile Actions */}
+              {}
               <div className="mt-auto space-y-3 pt-6 border-t border-gray-100">
                 <Link to="/profile" className="flex items-center space-x-4 p-4 text-gray-600 font-bold hover:text-primary-600 transition-colors">
                   <User className="w-5 h-5 text-gray-400" />

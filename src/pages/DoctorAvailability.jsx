@@ -202,13 +202,13 @@ const DoctorAvailability = () => {
   return (
     <div className="min-h-screen pt-20 pb-8 bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
+        {}
         <div className="mb-6">
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">My Availability</h1>
           <p className="text-gray-600">Manage your weekly schedule and blocked dates</p>
         </div>
 
-        {/* Action Bar */}
+        {}
         <div className="mb-6 bg-white rounded-2xl shadow-sm p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Clock className="w-4 h-4 flex-shrink-0" />
@@ -223,7 +223,7 @@ const DoctorAvailability = () => {
           </button>
         </div>
 
-        {/* Desktop Weekly Calendar Grid */}
+        {}
         <div className="hidden lg:block bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
           <div className="grid grid-cols-7 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
             {daysOfWeek.map((day) => (
@@ -298,7 +298,7 @@ const DoctorAvailability = () => {
           </div>
         </div>
 
-        {/* Mobile/Tablet List View */}
+        {}
         <div className="lg:hidden space-y-3 mb-6">
           {daysOfWeek.map((day) => {
             const slots = getDaySlots(day);
@@ -356,7 +356,7 @@ const DoctorAvailability = () => {
           })}
         </div>
 
-        {/* Blocked Dates Section */}
+        {}
         {blockedDates.length > 0 && (
           <div className="bg-white rounded-2xl shadow-sm p-6">
             <div className="flex items-center gap-2 mb-4">
@@ -394,7 +394,7 @@ const DoctorAvailability = () => {
         )}
       </div>
 
-      {/* Quick Add Modal */}
+      {}
       {editingDay && (
         <QuickAddModal
           day={editingDay}
@@ -402,7 +402,7 @@ const DoctorAvailability = () => {
         />
       )}
 
-      {/* Block Date Modal */}
+      {}
       {showBlockDate && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl animate-fadeIn">

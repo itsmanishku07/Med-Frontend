@@ -14,7 +14,7 @@ export default function Notifications() {
   const navigate = useNavigate()
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('all') // all, unread, read
+  const [filter, setFilter] = useState('all')
   const [deleting, setDeleting] = useState(null)
   const [isDeleteAllReadModalOpen, setIsDeleteAllReadModalOpen] = useState(false)
 

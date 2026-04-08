@@ -28,7 +28,6 @@ const Register = () => {
   const onSubmit = async (data) => {
     setIsLoading(true)
     try {
-      // Use the new backend verification flow
       const response = await authAPI.signupRequest({
         email: data.email,
         password: data.password,
@@ -51,7 +50,6 @@ const Register = () => {
   const handleGoogleSignUp = async () => {
     setIsGoogleLoading(true)
     try {
-      // Get the currently selected role from the form
       const selectedRole = watch('role')
       if (!selectedRole) {
         toast.error('Please select an account type first')
@@ -113,7 +111,7 @@ const Register = () => {
 
   return (
     <div className="min-h-screen pt-16 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden font-sans">
-      {/* Animated Background */}
+      {}
       <div className="absolute inset-0 z-0">
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-primary-300 rounded-full mix-blend-multiply filter blur-[128px] opacity-40 animate-pulse-slow"></div>
         <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-secondary-300 rounded-full mix-blend-multiply filter blur-[128px] opacity-40 animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
@@ -134,7 +132,7 @@ const Register = () => {
           </div>
 
           <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-            {/* Google Signup */}
+            {}
             <button
               type="button"
               onClick={handleGoogleSignUp}
@@ -163,7 +161,7 @@ const Register = () => {
 
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Full Name */}
+                {}
                 <div>
                   <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">Full Name</label>
                   <div className="relative group">
@@ -179,7 +177,7 @@ const Register = () => {
                   </div>
                   {errors.name && <p className="mt-1 text-sm text-red-500 ml-1 font-medium">{errors.name.message}</p>}
                 </div>
-                {/* Email */}
+                {}
                 <div>
                   <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">Email</label>
                   <div className="relative group">
@@ -197,7 +195,7 @@ const Register = () => {
                 </div>
               </div>
 
-              {/* Account Type */}
+              {}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1">Account Type</label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -226,7 +224,7 @@ const Register = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Password */}
+                {}
                 <div>
                   <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">Password</label>
                   <div className="relative group">
@@ -246,7 +244,7 @@ const Register = () => {
                   {errors.password && <p className="mt-1 text-sm text-red-500 ml-1 font-medium">{errors.password.message}</p>}
                 </div>
 
-                {/* Confirm Password */}
+                {}
                 <div>
                   <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">Confirm Password</label>
                   <div className="relative group">

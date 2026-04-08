@@ -7,7 +7,6 @@ import ErrorBoundary from './components/ErrorBoundary'
 import Navbar from './components/Navbar'
 import LoadingSpinner from './components/LoadingSpinner'
 
-// Lazy load pages for production performance
 const LandingPage = lazy(() => import('./pages/LandingPage'))
 const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))

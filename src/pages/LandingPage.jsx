@@ -67,9 +67,9 @@ function LandingPage() {
 
   return (
     <div className="min-h-screen pt-16 font-sans">
-      {/* Hero Section */}
+      {}
       <section className="relative overflow-hidden bg-slate-50 border-b border-gray-100 pb-20 pt-16 md:pt-28 md:pb-32">
-        {/* Animated Background Gradients */}
+        {}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1200px] h-full pointer-events-none">
           <div className="absolute -top-40 -left-20 w-[600px] h-[600px] bg-primary-300 mix-blend-multiply filter blur-[100px] opacity-30 animate-pulse-slow"></div>
           <div className="absolute top-20 -right-20 w-[500px] h-[500px] bg-secondary-300 mix-blend-multiply filter blur-[100px] opacity-40 animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
@@ -133,7 +133,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Stats Section */}
+      {}
       <section className="py-16 bg-white relative -mt-10 mx-4 lg:mx-auto max-w-6xl rounded-3xl shadow-glass border border-gray-100 z-20 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-primary-50/30"></div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 px-6 lg:px-12 relative z-10">
@@ -154,7 +154,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Features Section */}
+      {}
       <section className="py-24 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16 leading-relaxed">
@@ -191,7 +191,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Benefits Section */}
+      {}
       <section className="py-24 bg-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-secondary-50 rounded-full filter blur-[100px] opacity-70"></div>
         
@@ -224,12 +224,12 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Security Banner */}
+      {}
       <section className="py-20 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-[2.5rem] p-12 md:p-16 text-white shadow-2xl relative overflow-hidden">
             
-            {/* Decorative background circle */}
+            {}
             <div className="absolute -right-32 -top-32 w-96 h-96 bg-primary-600/30 rounded-full filter blur-[80px]"></div>
 
             <div className="flex flex-col md:flex-row items-center justify-between relative z-10">
@@ -272,7 +272,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {}
       <section className="py-24 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center bg-primary-50 rounded-[3rem] p-16 border border-primary-100 shadow-soft">
           <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">
@@ -301,7 +301,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
+      {}
       <footer className="bg-gray-900 text-gray-400 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-12 mb-12">

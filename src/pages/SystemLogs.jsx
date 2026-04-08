@@ -63,7 +63,6 @@ const SystemLogs = () => {
       }
     } catch (error) {
       console.error('Failed to load statistics:', error)
-      // Set empty statistics instead of showing error
       setStatistics({
         total_requests: 0,
         total_errors: 0,
@@ -123,7 +122,6 @@ const SystemLogs = () => {
       if (response.data.success) {
         toast.success('Logs cleared successfully')
         setShowClearConfirm(false)
-        // Reload data
         loadStatistics()
         loadLogs()
       }
@@ -153,7 +151,6 @@ const SystemLogs = () => {
         setLogSettings(response.data.settings)
         toast.success(response.data.message)
         setShowSettings(false)
-        // Reload data if file logging was enabled
         if (fileEnabled && !logSettings.enabled) {
           loadStatistics()
           loadLogs()
@@ -200,7 +197,6 @@ const SystemLogs = () => {
     )
   }
 
-  // Prepare chart data
   const requestsChartData = Object.entries(statistics.requests_by_hour || {}).map(([hour, count]) => ({
     hour: new Date(hour).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
     requests: count
@@ -219,7 +215,7 @@ const SystemLogs = () => {
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pt-20 sm:pt-24">
       <div className="max-w-7xl mx-auto">
-        {/* Clear Logs Confirmation Modal */}
+        {}
         {showClearConfirm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl p-4 sm:p-6 max-w-md w-full shadow-2xl">
@@ -253,7 +249,7 @@ const SystemLogs = () => {
           </div>
         )}
 
-        {/* Settings Modal */}
+        {}
         {showSettings && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl p-4 sm:p-6 max-w-md w-full shadow-2xl">
@@ -350,7 +346,7 @@ const SystemLogs = () => {
           </div>
         )}
 
-        {/* Header */}
+        {}
         <div className="flex flex-col space-y-4 mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
             <div>
@@ -368,7 +364,7 @@ const SystemLogs = () => {
             </div>
           </div>
 
-          {/* Warning banner when logging is disabled */}
+          {}
           {!logSettings.enabled && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="flex items-start space-x-3">
@@ -432,7 +428,7 @@ const SystemLogs = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 border border-gray-200">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -483,9 +479,9 @@ const SystemLogs = () => {
         </div>
       </div>
 
-      {/* Charts */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-        {/* Requests Over Time */}
+        {}
         <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 border border-gray-200">
           <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-4">Requests Over Time</h3>
           {requestsChartData.length > 0 ? (
@@ -505,7 +501,7 @@ const SystemLogs = () => {
           )}
         </div>
 
-        {/* Status Codes */}
+        {}
         <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 border border-gray-200">
           <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-4">Status Codes</h3>
           {statusCodesData.length > 0 ? (
@@ -536,7 +532,7 @@ const SystemLogs = () => {
         </div>
       </div>
 
-      {/* Top Endpoints */}
+      {}
       {endpointsChartData.length > 0 && (
         <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 border border-gray-200 mb-6 sm:mb-8">
           <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-4">Top Endpoints</h3>
@@ -552,7 +548,7 @@ const SystemLogs = () => {
         </div>
       )}
 
-      {/* Recent Errors */}
+      {}
       {statistics.recent_errors && statistics.recent_errors.length > 0 && (
         <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 border border-gray-200 mb-6 sm:mb-8">
           <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-4">Recent Errors</h3>
@@ -575,7 +571,7 @@ const SystemLogs = () => {
         </div>
       )}
 
-      {/* Log Viewer */}
+      {}
       <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 border border-gray-200">
         <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-4">
           <h3 className="text-base sm:text-lg font-bold text-gray-900">Log Entries</h3>
@@ -610,14 +606,12 @@ const SystemLogs = () => {
 
         <div className="space-y-3 max-h-[400px] sm:max-h-[600px] overflow-y-auto">
           {logs.map((log, index) => {
-            // Parse the log data if it exists
             let parsedData = null
             try {
               if (log.data) {
                 parsedData = log.data
               }
             } catch (e) {
-              // Ignore parsing errors
             }
 
             return (
@@ -625,7 +619,7 @@ const SystemLogs = () => {
                 key={index}
                 className={`rounded-lg border ${getLevelColor(log.level)} overflow-hidden hover:shadow-md transition-shadow`}
               >
-                {/* Header Bar */}
+                {}
                 <div className="flex items-center justify-between px-4 py-2 bg-white bg-opacity-40 border-b border-current border-opacity-20">
                   <div className="flex items-center space-x-3">
                     {getLevelIcon(log.level)}
@@ -641,11 +635,11 @@ const SystemLogs = () => {
                   </span>
                 </div>
 
-                {/* Content */}
+                {}
                 <div className="p-4">
                   {parsedData ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {/* Method */}
+                      {}
                       {parsedData.method && (
                         <div className="flex flex-col space-y-1">
                           <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Method</span>
@@ -655,7 +649,7 @@ const SystemLogs = () => {
                         </div>
                       )}
                       
-                      {/* Status Code */}
+                      {}
                       {parsedData.status_code && (
                         <div className="flex flex-col space-y-1">
                           <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Status Code</span>
@@ -670,7 +664,7 @@ const SystemLogs = () => {
                         </div>
                       )}
 
-                      {/* Duration */}
+                      {}
                       {parsedData.duration_ms !== undefined && (
                         <div className="flex flex-col space-y-1">
                           <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Duration</span>
@@ -684,7 +678,7 @@ const SystemLogs = () => {
                         </div>
                       )}
 
-                      {/* User Email */}
+                      {}
                       {parsedData.user_email && (
                         <div className="flex flex-col space-y-1">
                           <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">User</span>
@@ -694,7 +688,7 @@ const SystemLogs = () => {
                         </div>
                       )}
 
-                      {/* IP Address */}
+                      {}
                       {parsedData.ip && (
                         <div className="flex flex-col space-y-1">
                           <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">IP Address</span>
@@ -704,7 +698,7 @@ const SystemLogs = () => {
                         </div>
                       )}
 
-                      {/* Path - Full Width */}
+                      {}
                       {parsedData.path && (
                         <div className="flex flex-col space-y-1 md:col-span-2">
                           <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Path</span>
@@ -714,7 +708,7 @@ const SystemLogs = () => {
                         </div>
                       )}
 
-                      {/* Error - Full Width */}
+                      {}
                       {parsedData.error && (
                         <div className="flex flex-col space-y-1 md:col-span-2">
                           <span className="text-xs font-semibold text-red-600 uppercase tracking-wide">Error Details</span>
@@ -737,7 +731,7 @@ const SystemLogs = () => {
                         </div>
                       )}
 
-                      {/* Message - Full Width */}
+                      {}
                       {parsedData.message && !parsedData.error && (
                         <div className="flex flex-col space-y-1 md:col-span-2">
                           <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Message</span>
@@ -747,7 +741,7 @@ const SystemLogs = () => {
                         </div>
                       )}
 
-                      {/* User Agent - Collapsible */}
+                      {}
                       {parsedData.user_agent && (
                         <div className="flex flex-col space-y-1 md:col-span-2">
                           <details className="group">
@@ -767,7 +761,7 @@ const SystemLogs = () => {
                       )}
                     </div>
                   ) : (
-                    /* Raw message fallback */
+                    
                     <div className="px-3 py-2 bg-gray-50 rounded border border-gray-200">
                       <p className="text-sm font-mono text-gray-800 break-all leading-relaxed">
                         {log.message}
@@ -780,7 +774,7 @@ const SystemLogs = () => {
           })}
         </div>
 
-        {/* Pagination */}
+        {}
         {pagination.total_pages > 1 && (
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-4 pt-4 border-t space-y-3 sm:space-y-0">
             <p className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">

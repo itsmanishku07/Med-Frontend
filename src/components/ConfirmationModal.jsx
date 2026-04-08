@@ -10,7 +10,7 @@ const ConfirmationModal = ({
   message = "This action cannot be undone.",
   confirmLabel = "Discard",
   cancelLabel = "Cancel",
-  type = "danger", // danger, warning, info
+  type = "danger",
   icon: CustomIcon
 }) => {
   const getColors = () => {
@@ -29,7 +29,7 @@ const ConfirmationModal = ({
           confirmBtn: 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500 shadow-amber-200',
           headerBg: 'bg-amber-50/50'
         }
-      default: // info
+      default:
         return {
           iconBg: 'bg-blue-100',
           iconColor: 'text-blue-600',

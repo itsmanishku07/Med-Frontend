@@ -64,7 +64,7 @@ export default function DoctorAvailabilityViewer({ isOpen, onClose, doctor }) {
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-full max-w-5xl transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all">
-                {/* Header */}
+                {}
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -84,7 +84,7 @@ export default function DoctorAvailabilityViewer({ isOpen, onClose, doctor }) {
                   </div>
                 </div>
 
-                {/* Content */}
+                {}
                 <div className="p-6">
                   {loading ? (
                     <div className="flex flex-col items-center justify-center py-12">
@@ -103,7 +103,7 @@ export default function DoctorAvailabilityViewer({ isOpen, onClose, doctor }) {
                     </div>
                   ) : (
                     <>
-                      {/* Desktop Weekly View */}
+                      {}
                       <div className="hidden lg:block">
                         <div className="grid grid-cols-7 gap-3">
                           {daysOfWeek.map((day) => {
@@ -148,7 +148,7 @@ export default function DoctorAvailabilityViewer({ isOpen, onClose, doctor }) {
                         </div>
                       </div>
 
-                      {/* Mobile List View */}
+                      {}
                       <div className="lg:hidden space-y-3">
                         {daysOfWeek.map((day) => {
                           const slots = getDaySlots(day);
@@ -181,7 +181,7 @@ export default function DoctorAvailabilityViewer({ isOpen, onClose, doctor }) {
                         })}
                       </div>
 
-                      {/* Info Note */}
+                      {}
                       <div className="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
                         <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                         <div>
@@ -198,7 +198,7 @@ export default function DoctorAvailabilityViewer({ isOpen, onClose, doctor }) {
                   )}
                 </div>
 
-                {/* Footer */}
+                {}
                 <div className="bg-gray-50 px-6 py-4 flex justify-end">
                   <button
                     onClick={onClose}

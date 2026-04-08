@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 
 const VerifyEmail = () => {
     const [searchParams] = useSearchParams()
-    const [status, setStatus] = useState('verifying') // verifying, success, error
+    const [status, setStatus] = useState('verifying')
     const [message, setMessage] = useState('')
     const token = searchParams.get('token')
     const navigate = useNavigate()
@@ -41,7 +41,7 @@ const VerifyEmail = () => {
 
     return (
         <div className="min-h-screen pt-16 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden font-sans">
-            {/* Animated Background */}
+            {}
             <div className="absolute inset-0 z-0">
                 <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-300 rounded-full mix-blend-multiply filter blur-[128px] opacity-40 animate-pulse-slow"></div>
                 <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary-300 rounded-full mix-blend-multiply filter blur-[128px] opacity-40 animate-pulse-slow" style={{ animationDelay: '2s' }}></div>

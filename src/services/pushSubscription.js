@@ -26,11 +26,9 @@ export async function subscribeToPush() {
     const reg = await registerServiceWorker()
     if (!reg) return false
 
-    // Request notification permission
     const permission = await Notification.requestPermission()
     if (permission !== 'granted') return false
 
-    // Check if already subscribed
     let sub = await reg.pushManager.getSubscription()
     if (!sub) {
       sub = await reg.pushManager.subscribe({
@@ -39,7 +37,6 @@ export async function subscribeToPush() {
       })
     }
 
-    // Send subscription to backend
     const subJson = sub.toJSON()
     await api.post('/push/subscribe', {
       endpoint: subJson.endpoint,

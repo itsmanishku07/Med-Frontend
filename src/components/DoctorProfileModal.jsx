@@ -71,10 +71,10 @@ export default function DoctorProfileModal({ isOpen, onClose, doctor }) {
                 leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
               >
                 <Dialog.Panel className="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
-                {/* Header Background */}
+                {}
                 <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-r from-primary-600 to-secondary-500" />
                 
-                {/* Close Button */}
+                {}
                 <button
                   type="button"
                   className="absolute top-4 right-4 z-10 rounded-full bg-white/20 p-2 text-white hover:bg-white/30 transition-colors backdrop-blur-md"
@@ -85,7 +85,7 @@ export default function DoctorProfileModal({ isOpen, onClose, doctor }) {
 
                 <div className="relative bg-white px-4 pb-4 pt-5 sm:p-8 mt-12 rounded-t-[2.5rem]">
                   <div className="sm:flex sm:items-start gap-6">
-                    {/* Avatar */}
+                    {}
                     <div className="relative -mt-20 mb-4 sm:mb-0">
                       <div className="h-32 w-32 rounded-3xl bg-white p-1 shadow-xl">
                         {doctor.profile_picture ? (
@@ -145,7 +145,7 @@ export default function DoctorProfileModal({ isOpen, onClose, doctor }) {
                   </div>
 
                   <div className="space-y-6 mt-6">
-                    {/* Bio Section */}
+                    {}
                     {isBooking ? (
                       <div className="bg-primary-50/50 p-6 rounded-2xl border border-primary-100 animate-in fade-in slide-in-from-bottom-4 duration-300">
                         <h4 className="text-sm font-black text-primary-900 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -188,7 +188,7 @@ export default function DoctorProfileModal({ isOpen, onClose, doctor }) {
                       )
                     )}
 
-                    {/* Contact Grid */}
+                    {}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -239,7 +239,7 @@ export default function DoctorProfileModal({ isOpen, onClose, doctor }) {
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
+                    {}
                     <div className="flex gap-3 pt-4 border-t border-gray-100">
                       <button
                         type="button"
@@ -290,7 +290,7 @@ export default function DoctorProfileModal({ isOpen, onClose, doctor }) {
         </div>
       </Dialog>
       
-      {/* Availability Viewer Modal */}
+      {}
       <DoctorAvailabilityViewer
         isOpen={showAvailability}
         onClose={() => setShowAvailability(false)}

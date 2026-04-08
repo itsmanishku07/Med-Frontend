@@ -29,7 +29,6 @@ export default function PatientDashboard() {
   useEffect(() => {
     fetchReports()
     fetchStats()
-    // Cleanup poll on page unmount
     return () => {
       if (pollRef.current) {
         clearInterval(pollRef.current)
@@ -38,7 +37,6 @@ export default function PatientDashboard() {
     }
   }, [])
 
-  // Poll every 5 s while any report is still being analysed
   useEffect(() => {
     const hasAnalysing = reports.some(r => r.status === 'ANALYZING' || r.status === 'PENDING')
 
@@ -62,7 +60,6 @@ export default function PatientDashboard() {
       clearInterval(pollRef.current)
       pollRef.current = null
     }
-    // No cleanup here — we manage the interval lifecycle manually above
   }, [reports])
 
   const fetchReports = async () => {
@@ -166,7 +163,6 @@ export default function PatientDashboard() {
       
       const file = new Blob([response.data], { type: response.headers['content-type'] })
       const fileURL = URL.createObjectURL(file)
-      // window.open(fileURL, '_blank')
       
       setModalFileData({ url: fileURL, type: response.headers['content-type'], name: 'Medical Report' })
       setShowFileModal(true)
@@ -213,7 +209,7 @@ export default function PatientDashboard() {
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="card p-6 flex items-center justify-between group">
           <div>
@@ -256,7 +252,7 @@ export default function PatientDashboard() {
         </div>
       </div>
 
-      {/* Upload Section */}
+      {}
       <div className="card border-t-4 border-t-primary-500 p-8 mb-8 relative overflow-hidden">
         <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-gradient-to-br from-primary-100 to-secondary-100 rounded-full opacity-50 mix-blend-multiply blur-xl font-sans"></div>
         <div className="flex items-center justify-between mb-6 relative z-10">
@@ -305,7 +301,7 @@ export default function PatientDashboard() {
         </div>
       </div>
 
-      {/* Reports List */}
+      {}
       <div className="card overflow-hidden">
         <div className="p-6 border-b border-gray-100 bg-gray-50/50">
           <h2 className="text-xl font-bold text-gray-900">My Medical Reports</h2>
@@ -499,7 +495,7 @@ export default function PatientDashboard() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {}
       <ConfirmationModal
         isOpen={isDeleteModalOpen}
         onClose={() => {

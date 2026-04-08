@@ -15,7 +15,7 @@ function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0)
   const dropdownRef = useRef(null)
   const lastFetchRef = useRef(0)
-  const CACHE_DURATION = 60000 // Cache for 1 minute
+  const CACHE_DURATION = 60000
 
   useEffect(() => {
     console.log('🔔 NotificationBell useEffect - isAuthenticated:', isAuthenticated)
@@ -24,7 +24,6 @@ function NotificationBell() {
       loadNotifications()
       setupWebSocket()
       
-      // Increased polling interval to 2 minutes to reduce requests
       const interval = setInterval(loadNotifications, 120000)
       return () => {
         clearInterval(interval)
@@ -58,7 +57,6 @@ function NotificationBell() {
           }
         })
         
-        // Force refresh on new notification
         lastFetchRef.current = 0
         loadNotifications()
       })
@@ -78,7 +76,6 @@ function NotificationBell() {
   }, [])
 
   const loadNotifications = async () => {
-    // Implement caching to prevent too many requests
     const now = Date.now()
     if (now - lastFetchRef.current < CACHE_DURATION) {
       console.log('🔔 Using cached notifications')
@@ -86,7 +83,6 @@ function NotificationBell() {
     }
 
     try {
-      // Single API call that returns both notifications and unread count
       const response = await api.get('/notifications', {
         params: { limit: 20 }
       })
@@ -95,7 +91,6 @@ function NotificationBell() {
         const notifs = response.data.notifications || []
         setNotifications(notifs)
         
-        // Calculate unread count from notifications instead of separate API call
         const count = notifs.filter(n => !n.is_read).length
         setUnreadCount(count)
         
@@ -103,7 +98,6 @@ function NotificationBell() {
       }
     } catch (error) {
       console.error('Failed to load notifications:', error)
-      // Don't retry immediately on error to avoid hammering the server
       lastFetchRef.current = now
     }
   }

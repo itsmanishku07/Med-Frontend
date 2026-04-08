@@ -10,7 +10,7 @@ export default function DoctorListing() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSpecialization, setSelectedSpecialization] = useState('All')
-  const [sortBy, setSortBy] = useState('name') // 'name', 'rating', 'experience'
+  const [sortBy, setSortBy] = useState('name')
 
   useEffect(() => {
     fetchDoctors()
@@ -50,13 +50,11 @@ export default function DoctorListing() {
     })
     .sort((a, b) => {
       if (sortBy === 'rating') {
-        // Sort by rating (highest first), then by number of reviews
         if (b.rating.average_rating !== a.rating.average_rating) {
           return b.rating.average_rating - a.rating.average_rating
         }
         return b.rating.total_reviews - a.rating.total_reviews
       } else {
-        // Sort alphabetically by name
         return (a.name || '').localeCompare(b.name || '')
       }
     })
@@ -79,7 +77,7 @@ export default function DoctorListing() {
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Hero Section */}
+        {}
         <div className="mb-12 text-center">
           <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-4">
             Find the Right <span className="text-primary-600">Specialist</span>
@@ -89,7 +87,7 @@ export default function DoctorListing() {
           </p>
         </div>
 
-        {/* Search and Filters */}
+        {}
         <div className="mb-8 space-y-6">
           <div className="relative max-w-2xl mx-auto group">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-transform group-focus-within:scale-110">
@@ -124,7 +122,7 @@ export default function DoctorListing() {
             ))}
           </div>
 
-          {/* Sort Options */}
+          {}
           <div className="flex items-center justify-center gap-3">
             <div className="flex items-center gap-2 text-gray-500 font-bold text-xs uppercase tracking-widest">
               <ArrowUpDown className="w-4 h-4" />
@@ -156,7 +154,7 @@ export default function DoctorListing() {
           </div>
         </div>
 
-        {/* Results Count */}
+        {}
         <div className="mb-6 text-center">
           <p className="text-sm text-gray-600 font-medium">
             Showing <span className="font-bold text-gray-900">{filteredAndSortedDoctors.length}</span> {filteredAndSortedDoctors.length === 1 ? 'doctor' : 'doctors'}
@@ -166,7 +164,7 @@ export default function DoctorListing() {
           </p>
         </div>
 
-        {/* Doctor Grid */}
+        {}
         {filteredAndSortedDoctors.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-200">
             <User className="mx-auto h-12 w-12 text-gray-300 mb-4" />
@@ -180,13 +178,13 @@ export default function DoctorListing() {
                 key={doctor.id} 
                 className="group bg-white rounded-3xl border border-gray-100 hover:border-primary-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
               >
-                {/* Card Header Background */}
+                {}
                 <div className="h-24 bg-gradient-to-br from-primary-50 to-primary-100/50 group-hover:from-primary-600 group-hover:to-secondary-500 transition-all duration-500 relative overflow-hidden">
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent scale-150 rotate-12" />
                 </div>
 
                 <div className="px-6 pb-6 relative flex flex-col flex-1">
-                  {/* Doctor Info */}
+                  {}
                   <div className="relative -mt-12 mb-4">
                     <div className="h-24 w-24 rounded-2xl bg-white p-1 shadow-lg group-hover:scale-105 transition-transform duration-300">
                       {doctor.profile_picture ? (
@@ -250,7 +248,7 @@ export default function DoctorListing() {
           </div>
         )}
 
-        {/* Floating Chat Suggestion */}
+        {}
         <div className="mt-16 bg-gradient-to-r from-gray-900 to-gray-800 rounded-3xl p-8 sm:p-12 text-center relative overflow-hidden shadow-2xl">
           <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-64 h-64 bg-secondary-500/10 rounded-full blur-3xl" />
