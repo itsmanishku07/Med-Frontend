@@ -29,6 +29,7 @@ export default function DoctorProfile() {
   const [isBooking, setIsBooking] = useState(false);
   const [bookingNotes, setBookingNotes] = useState('');
   const [preferredTime, setPreferredTime] = useState('');
+  const [uploadingReport, setUploadingReport] = useState(false);
 
   const isPatient = userProfile?.role === 'PATIENT';
   const isDoctor = userProfile?.role === 'DOCTOR';
@@ -154,6 +155,47 @@ export default function DoctorProfile() {
       toast.error('Failed to send request');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File too large. Max 10MB');
+      return;
+    }
+
+    // Validate file type
+    const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+    if (!allowed.includes(file.type)) {
+      toast.error('Only PDF, JPG, and PNG are allowed');
+      return;
+    }
+
+    try {
+      setUploadingReport(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('doctor_id', doctorId);
+      formData.append('is_private', 'true');
+
+      const response = await api.post('/medical-reports/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (response.data.success) {
+        toast.success('Report shared privately with Dr. ' + doctor.name);
+      }
+    } catch (error) {
+      console.error('Error uploading report:', error);
+      toast.error(error.response?.data?.message || 'Failed to share report');
+    } finally {
+      setUploadingReport(false);
+      // Clear input
+      e.target.value = '';
     }
   };
 
@@ -317,6 +359,29 @@ export default function DoctorProfile() {
                       <MessageSquare className="w-5 h-5" />
                       Book Appointment
                     </button>
+                    
+                    <div className="relative">
+                      <input
+                        type="file"
+                        id="report-upload"
+                        className="hidden"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={handleFileUpload}
+                        disabled={uploadingReport}
+                      />
+                      <button
+                        onClick={() => document.getElementById('report-upload').click()}
+                        disabled={uploadingReport}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold transition shadow-sm disabled:opacity-50"
+                      >
+                        {uploadingReport ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <Send className="w-5 h-5" />
+                        )}
+                        Share Private Report
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

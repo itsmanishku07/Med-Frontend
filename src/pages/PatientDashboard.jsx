@@ -23,6 +23,7 @@ export default function PatientDashboard() {
   const [modalFileData, setModalFileData] = useState(null)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [reportToDelete, setReportToDelete] = useState(null)
+  const [activeFilter, setActiveFilter] = useState('all') // 'all' or 'private'
 
   const pollRef = useRef(null)
 
@@ -35,14 +36,15 @@ export default function PatientDashboard() {
         pollRef.current = null
       }
     }
-  }, [])
+  }, [activeFilter])
 
   useEffect(() => {
     const hasAnalysing = reports.some(r => r.status === 'ANALYZING' || r.status === 'PENDING')
 
     if (hasAnalysing && !pollRef.current) {
       pollRef.current = setInterval(async () => {
-        const updated = await api.get('/medical-reports/my-reports').catch(() => null)
+        const endpoint = activeFilter === 'private' ? '/medical-reports/private-reports' : '/medical-reports/my-reports'
+        const updated = await api.get(endpoint).catch(() => null)
         if (!updated) return
         const list = updated.data.reports || []
         setReports(list)
@@ -64,7 +66,9 @@ export default function PatientDashboard() {
 
   const fetchReports = async () => {
     try {
-      const response = await api.get('/medical-reports/my-reports')
+      setLoading(true)
+      const endpoint = activeFilter === 'private' ? '/medical-reports/private-reports' : '/medical-reports/my-reports'
+      const response = await api.get(endpoint)
       setReports(response.data.reports || [])
     } catch (error) {
       console.error('Error fetching reports:', error)
@@ -303,8 +307,30 @@ export default function PatientDashboard() {
 
       {}
       <div className="card overflow-hidden">
-        <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+        <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h2 className="text-xl font-bold text-gray-900">My Medical Reports</h2>
+          <div className="flex bg-white p-1 rounded-xl border border-gray-200 shadow-sm self-start sm:self-auto">
+            <button
+              onClick={() => setActiveFilter('all')}
+              className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
+                activeFilter === 'all'
+                  ? 'bg-primary-600 text-white shadow-md shadow-primary-500/20'
+                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              All Reports
+            </button>
+            <button
+              onClick={() => setActiveFilter('private')}
+              className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
+                activeFilter === 'private'
+                  ? 'bg-primary-600 text-white shadow-md shadow-primary-500/20'
+                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              Private Consults
+            </button>
+          </div>
         </div>
         
         {reports.length === 0 ? (
@@ -374,7 +400,18 @@ export default function PatientDashboard() {
                             <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
                               <MessageSquare className="w-4 h-4 text-primary-600" />
                             </div>
-                            <span className="text-sm font-bold text-primary-700">Doctor assigned for consultation</span>
+                            <span className="text-sm font-bold text-primary-700">
+                              {report.assigned_doctor_name ? (
+                                <>Shared with <span 
+                                  className="text-primary-800 hover:underline cursor-pointer"
+                                  onClick={() => navigate(`/doctor/${report.assigned_doctor_id}`)}
+                                >
+                                  Dr. {report.assigned_doctor_name}
+                                </span></>
+                              ) : (
+                                "Doctor assigned for consultation"
+                              )}
+                            </span>
                           </div>
                         )}
                       </div>
