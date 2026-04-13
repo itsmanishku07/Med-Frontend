@@ -375,15 +375,31 @@ export default function ReportDetail() {
     return '🟢'
   }
 
-  const handleExportPDF = () => {
-    setIsPrinting(true)
+  const handleExportPDF = async () => {
+    try {
+      toast.loading('Generating professional medical report...', { id: 'export-pdf' })
+      setIsPrinting(true)
 
-    setTimeout(() => {
-      window.print()
-      setTimeout(() => {
-        setIsPrinting(false)
-      }, 100)
-    }, 100)
+      const response = await api.get(`/medical-reports/${reportId}/export-pdf`, {
+        responseType: 'blob'
+      })
+
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `MedReport_Analysis_${reportId.substring(0, 8)}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+
+      toast.success('Professional report downloaded!', { id: 'export-pdf' })
+    } catch (error) {
+      console.error('Error exporting PDF:', error)
+      toast.error('Failed to generate professional PDF', { id: 'export-pdf' })
+    } finally {
+      setIsPrinting(false)
+    }
   }
 
   const handleDeleteReport = async () => {
@@ -1025,12 +1041,20 @@ export default function ReportDetail() {
                   </button>
                 )}
 
+                <button
+                  onClick={handleExportPDF}
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-95"
+                >
+                  <Printer className="w-4 h-4" />
+                  Download PDF
+                </button>
+
                 { }
                 <button
                   onClick={handleViewOriginal}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200 transition-colors"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 transition-colors"
                 >
-                  <FileText className="w-3.5 h-3.5" />
+                  <FileText className="w-4 h-4" />
                   View Original
                 </button>
               </div>
@@ -1671,24 +1695,55 @@ export default function ReportDetail() {
                           </p>
 
                           {!report.assigned_doctor_id && (
-                            <button
-                              onClick={async () => {
-                                try {
-                                  const response = await api.post(`/medical-reports/${reportId}/assign-doctor`, {
-                                    doctor_id: doctor.doctor_id
-                                  })
-                                  if (response.data.success) {
-                                    toast.success(`Dr. ${doctor.doctor_name} assigned successfully!`)
-                                    fetchReport()
+                            <div className="flex flex-wrap gap-3">
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    const response = await api.post(`/medical-reports/${reportId}/assign-doctor`, {
+                                      doctor_id: doctor.doctor_id
+                                    })
+                                    if (response.data.success) {
+                                      toast.success(`Dr. ${doctor.doctor_name} assigned successfully!`)
+                                      fetchReport()
+                                    }
+                                  } catch (error) {
+                                    toast.error('Failed to assign doctor')
                                   }
-                                } catch (error) {
-                                  toast.error('Failed to assign doctor')
-                                }
-                              }}
-                              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-semibold"
-                            >
-                              Assign This Doctor
-                            </button>
+                                }}
+                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-semibold shadow-sm"
+                              >
+                                Assign This Doctor
+                              </button>
+
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    toast.loading('Sharing privately...', { id: 'private-share' })
+                                    const response = await medicalReportAPI.privateAssign(reportId, doctor.doctor_id)
+                                    if (response.data.success) {
+                                      toast.success(`Report shared privately with Dr. ${doctor.doctor_name}!`, { id: 'private-share' })
+                                      fetchReport()
+                                    } else {
+                                      toast.error(response.data.message || 'Failed to share privately', { id: 'private-share' })
+                                    }
+                                  } catch (error) {
+                                    console.error('Error sharing privately:', error)
+                                    toast.error('Failed to share report privately', { id: 'private-share' })
+                                  }
+                                }}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm flex items-center gap-2"
+                              >
+                                <ShieldCheck className="w-4 h-4" />
+                                Share Privately
+                              </button>
+                            </div>
+                          )}
+
+                          {report.assigned_doctor_id === doctor.doctor_id && report.is_private && (
+                            <div className="mt-2 flex items-center gap-2 text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200 w-fit">
+                              <ShieldCheck className="w-4 h-4" />
+                              <span className="text-xs font-bold uppercase tracking-wider">Privately Shared</span>
+                            </div>
                           )}
                         </div>
                       </div>

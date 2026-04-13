@@ -77,6 +77,8 @@ export const medicalReportAPI = {
   archiveReport: (id, isArchived) => api.put(`/medical-reports/${id}/archive`, { is_archived: isArchived }),
   updateAiAnalysis: (id, aiAnalysis) => api.put(`/medical-reports/${id}/ai-analysis`, { ai_analysis: aiAnalysis }),
   getGenericMedicineInfo: (name) => api.get('/medical-reports/medicine-info', { params: { name } }),
+  privateAssign: (id, doctorId) => api.post(`/medical-reports/${id}/private-assign`, { doctor_id: doctorId }),
+  getPrivateReports: () => api.get('/medical-reports/private-reports'),
 }
 
 export const notificationAPI = {

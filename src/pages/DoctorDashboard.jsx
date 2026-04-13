@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/FirebaseAuthContext'
-import { Users, FileText, AlertTriangle, Clock, CheckCircle, MessageSquare, Bell, ChevronRight, Activity, Archive, Inbox } from 'lucide-react'
+import { Users, FileText, AlertTriangle, Clock, CheckCircle, MessageSquare, Bell, ChevronRight, Activity, Archive, Inbox, ShieldCheck } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import api from '../services/api'
 
@@ -33,8 +33,14 @@ export default function DoctorDashboard() {
 
   const fetchAssignments = async () => {
     try {
-      const response = await api.get('/medical-reports/my-reports')
-      const reports = response.data.reports || []
+      let reports = []
+      if (viewMode === 'PRIVATE') {
+        const response = await api.get('/medical-reports/private-reports')
+        reports = response.data.reports || []
+      } else {
+        const response = await api.get('/medical-reports/my-reports')
+        reports = response.data.reports || []
+      }
       
       const mappedAssignments = reports.map(report => ({
         id: report.id,
@@ -47,6 +53,7 @@ export default function DoctorDashboard() {
         priority: report.ai_analysis?.severity_level || 'LOW',
         ai_analysis: report.ai_analysis,
         is_archived: report.is_archived || false,
+        is_private: report.is_private || false,
         estimated_response_time_minutes: report.ai_analysis?.severity_level === 'CRITICAL' ? 15 : 60
       }))
       
@@ -273,6 +280,17 @@ export default function DoctorDashboard() {
             Active
           </button>
           <button
+            onClick={() => setViewMode('PRIVATE')}
+            className={`px-5 py-2 font-bold text-sm transition-all rounded-xl flex items-center gap-2 ${
+              viewMode === 'PRIVATE'
+                ? 'bg-primary-600 text-white shadow-md'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4" />
+            Private
+          </button>
+          <button
             onClick={() => setViewMode('ARCHIVED')}
             className={`px-5 py-2 font-bold text-sm transition-all rounded-xl flex items-center gap-2 ${
               viewMode === 'ARCHIVED'
@@ -325,9 +343,11 @@ export default function DoctorDashboard() {
             <p className="text-sm font-medium text-gray-500">
               {viewMode === 'ARCHIVED' 
                 ? 'No archived cases'
-                : filter === 'ALL' 
-                  ? 'You have no patient assignments at the moment'
-                  : `No ${filter.toLowerCase()} priority cases`
+                : viewMode === 'PRIVATE'
+                  ? 'No private consultations shared with you yet'
+                  : filter === 'ALL' 
+                    ? 'You have no patient assignments at the moment'
+                    : `No ${filter.toLowerCase()} priority cases`
               }
             </p>
           </div>
@@ -336,7 +356,10 @@ export default function DoctorDashboard() {
             {assignments
               .filter(assignment => {
                 if (viewMode === 'ARCHIVED') return assignment.is_archived;
+                if (viewMode === 'PRIVATE') return assignment.is_private && !assignment.is_archived;
+                
                 if (assignment.is_archived) return false;
+                if (assignment.is_private) return false; // Hide private from regular Active view
                 
                 if (filter === 'ALL') return true;
                 if (filter === 'CRITICAL') return assignment.priority === 'CRITICAL';
