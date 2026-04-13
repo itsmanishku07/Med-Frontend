@@ -13,6 +13,20 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import ConfirmationModal from '../components/ConfirmationModal'
 
+const INDIAN_LANGUAGES = [
+  { name: 'English', native: 'English' },
+  { name: 'Hindi', native: 'हिन्दी' },
+  { name: 'Marathi', native: 'मराठी' },
+  { name: 'Bengali', native: 'বাংলা' },
+  { name: 'Telugu', native: 'తెలుగు' },
+  { name: 'Tamil', native: 'தமிழ்' },
+  { name: 'Kannada', native: 'ಕನ್ನಡ' },
+  { name: 'Malayalam', native: 'മലയാളം' },
+  { name: 'Gujarati', native: 'ગુજરાતી' },
+  { name: 'Punjabi', native: 'ਪੰਜਾਬੀ' },
+  { name: 'Odia', native: 'ଓଡ଼ିଆ' }
+]
+
 function MedicineInfoModal({ info, onClose }) {
   if (!info) return null
 
@@ -35,7 +49,7 @@ function MedicineInfoModal({ info, onClose }) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-          {}
+          { }
           <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
             <div className="flex items-center gap-2 mb-2 text-gray-900 font-semibold">
               <FileTextIcon className="w-4 h-4 text-blue-500" />
@@ -45,7 +59,7 @@ function MedicineInfoModal({ info, onClose }) {
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            {}
+            { }
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-green-700 font-semibold">
                 <ShieldCheck className="w-4 h-4" />
@@ -61,7 +75,7 @@ function MedicineInfoModal({ info, onClose }) {
               </ul>
             </div>
 
-            {}
+            { }
             <div className="space-y-3 p-4 bg-orange-50/50 rounded-2xl border border-orange-100">
               <div className="flex items-center gap-2 text-orange-700 font-semibold">
                 <AlertTriangle className="w-4 h-4" />
@@ -77,7 +91,7 @@ function MedicineInfoModal({ info, onClose }) {
               </ul>
             </div>
 
-            {}
+            { }
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-blue-700 font-semibold">
                 <Timer className="w-4 h-4" />
@@ -86,7 +100,7 @@ function MedicineInfoModal({ info, onClose }) {
               <p className="text-sm text-gray-600 pl-6">{info.dosage_timing}</p>
             </div>
 
-            {}
+            { }
             <div className="space-y-3 p-4 bg-red-50/50 rounded-2xl border border-red-100">
               <div className="flex items-center gap-2 text-red-700 font-semibold">
                 <AlertTriangle className="w-4 h-4" />
@@ -143,6 +157,7 @@ export default function ReportDetail() {
   const chatEndRef = useRef(null)
   const [aiChatHistory, setAiChatHistory] = useState([])
   const [aiQuestion, setAiQuestion] = useState('')
+  const [selectedLanguage, setSelectedLanguage] = useState('English')
   const [isAskingAI, setIsAskingAI] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [loadingHistory, setLoadingHistory] = useState(false)
@@ -213,7 +228,10 @@ export default function ReportDetail() {
 
     try {
       setIsAskingAI(true)
-      const response = await api.post(`/medical-reports/${reportId}/ask`, { question: questionText })
+      const response = await api.post(`/medical-reports/${reportId}/ask`, {
+        question: questionText,
+        language: selectedLanguage
+      })
 
       if (response.data.success) {
         setAiChatHistory(prev => {
@@ -888,14 +906,14 @@ export default function ReportDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20 pb-10 font-sans print:bg-white print:py-0">
-      {}
+      { }
       <div className="hidden print:block print-header mb-4">
         <h1 className="text-xl font-bold">Medical Report Analysis</h1>
         <p className="text-xs text-gray-500 mt-0.5">Generated on {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
         {aiAnalysis.analyzed_by && <p className="text-xs text-gray-400 mt-0.5">Analyzed by: {aiAnalysis.analyzed_by}</p>}
       </div>
 
-      {}
+      { }
       {selectedMedicineInfo && (
         <MedicineInfoModal
           info={selectedMedicineInfo}
@@ -905,7 +923,7 @@ export default function ReportDetail() {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 print:px-0">
 
-        {}
+        { }
         <button
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 mb-6 bg-blue-50/50 px-3 py-1.5 rounded-lg transition-all group"
@@ -914,11 +932,11 @@ export default function ReportDetail() {
           Back to Dashboard
         </button>
 
-        {}
+        { }
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6 mb-6 print:border-gray-400">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
 
-            {}
+            { }
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 min-w-0">
               <div className="w-14 h-14 shrink-0 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
                 <FileText className="w-7 h-7" />
@@ -946,9 +964,9 @@ export default function ReportDetail() {
               </div>
             </div>
 
-            {}
+            { }
             <div className="flex flex-col items-center sm:items-start lg:items-end gap-4 min-w-[200px]">
-              {}
+              { }
               <div className="flex flex-wrap items-center justify-center sm:justify-start lg:justify-end gap-2">
                 {aiAnalysis.severity_level && (
                   <div className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm border ${getSeverityColor(aiAnalysis.severity_level)}`}>
@@ -965,9 +983,9 @@ export default function ReportDetail() {
                 )}
               </div>
 
-              {}
+              { }
               <div className="flex flex-wrap items-center justify-center sm:justify-start lg:justify-end gap-2 w-full sm:w-auto print:hidden">
-                {}
+                { }
                 {!isDoctor && (userProfile?.id === report?.patient_id || userProfile?.role === 'ADMIN') && (
                   <button
                     onClick={() => setIsDeleteModalOpen(true)}
@@ -977,7 +995,7 @@ export default function ReportDetail() {
                     Delete
                   </button>
                 )}
-                {}
+                { }
                 {report.assigned_doctor_id && (
                   <button
                     onClick={() => navigate(`/chat/${reportId}`)}
@@ -987,7 +1005,7 @@ export default function ReportDetail() {
                     Doctor Chat
                   </button>
                 )}
-                {}
+                { }
                 {!isDoctor && (
                   <button
                     onClick={triggerAIAnalysis}
@@ -1007,7 +1025,7 @@ export default function ReportDetail() {
                   </button>
                 )}
 
-                {}
+                { }
                 <button
                   onClick={handleViewOriginal}
                   className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200 transition-colors"
@@ -1021,9 +1039,9 @@ export default function ReportDetail() {
         </div>
 
 
-        {}
+        { }
 
-        {}
+        { }
         {isDoctor && (
           <div className={`mb-4 rounded-xl border px-4 py-3 flex items-center gap-3 print:hidden ${report.doctor_edit_permission ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
             {report.doctor_edit_permission ? (
@@ -1040,7 +1058,7 @@ export default function ReportDetail() {
           </div>
         )}
 
-        {}
+        { }
         {isPatient && report.assigned_doctor_id && (
           <div className={`mb-4 rounded-xl border px-4 py-3 flex items-center justify-between gap-3 print:hidden ${report.doctor_edit_permission ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
             <div className="flex items-center gap-2">
@@ -1060,7 +1078,7 @@ export default function ReportDetail() {
           </div>
         )}
 
-        {}
+        { }
         <div className="flex items-center gap-1 mb-4 bg-white rounded-lg border border-gray-200 shadow-sm p-1 overflow-x-auto scrollbar-hide print:hidden">
           {[
             { id: 'overview', label: 'Overview', icon: Clipboard },
@@ -1087,15 +1105,15 @@ export default function ReportDetail() {
           })}
         </div>
 
-        {}
+        { }
         <div className="space-y-3 mb-4">
           {Object.keys(aiAnalysis).length > 0 && (
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-              {}
+              { }
               <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 flex-wrap">
                 <span className="text-xs font-medium text-gray-400 uppercase tracking-wide mr-1">Details</span>
 
-                {}
+                { }
                 <button
                   onClick={() => setShowSummary(!showSummary)}
                   className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${showSummary
@@ -1112,7 +1130,7 @@ export default function ReportDetail() {
                   <ChevronDown className={`w-3 h-3 transition-transform ${showSummary ? 'rotate-180' : ''}`} />
                 </button>
 
-                {}
+                { }
                 <button
                   onClick={() => setShowAnalysis(!showAnalysis)}
                   className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${showAnalysis
@@ -1125,7 +1143,7 @@ export default function ReportDetail() {
                   <ChevronDown className={`w-3 h-3 transition-transform ${showAnalysis ? 'rotate-180' : ''}`} />
                 </button>
 
-                {}
+                { }
                 {report.ai_analysis?.extraction_info && (
                   <button
                     onClick={() => setShowExtractionInfo(!showExtractionInfo)}
@@ -1141,7 +1159,7 @@ export default function ReportDetail() {
                 )}
               </div>
 
-              {}
+              { }
               {showSummary && (
                 <div className="px-4 py-3 border-b border-gray-100 animate-fadeIn">
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -1200,7 +1218,7 @@ export default function ReportDetail() {
                 </div>
               )}
 
-              {}
+              { }
               {showAnalysis && (
                 <div className="px-4 py-3 border-b border-gray-100 animate-fadeIn">
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -1224,7 +1242,7 @@ export default function ReportDetail() {
                 </div>
               )}
 
-              {}
+              { }
               {showExtractionInfo && report.ai_analysis?.extraction_info && (
                 <div className="px-4 py-3 animate-fadeIn">
                   {report.ai_analysis.extraction_info.ocr_quality_warning && (
@@ -2741,7 +2759,7 @@ export default function ReportDetail() {
                 .markdown-container strong { font-weight: 700; color: #111827; }
                 .markdown-container blockquote { border-left: 4px solid #e5e7eb; padding-left: 0.75rem; font-style: italic; margin: 0.5rem 0; color: #4b5563; }
               `}</style>
-              {}
+              { }
               <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-blue-100 rounded-lg">
@@ -2752,7 +2770,21 @@ export default function ReportDetail() {
                     <p className="text-xs text-gray-500">Ask anything about this report</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">Response Language</span>
+                    <select
+                      value={selectedLanguage}
+                      onChange={(e) => setSelectedLanguage(e.target.value)}
+                      className="text-xs font-bold text-blue-600 bg-transparent outline-none cursor-pointer"
+                    >
+                      {INDIAN_LANGUAGES.map(lang => (
+                        <option key={lang.name} value={lang.name}>
+                          {lang.name} ({lang.native})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   {loadingHistory && <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>}
                   <button
                     onClick={() => setIsClearChatModalOpen(true)}
@@ -2765,7 +2797,25 @@ export default function ReportDetail() {
                 </div>
               </div>
 
-              {}
+              {/* Mobile Language Selector */}
+              <div className="sm:hidden p-3 bg-white border-b border-gray-100">
+                <div className="flex items-center justify-between px-2">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">AI Response Language</span>
+                  <select
+                    value={selectedLanguage}
+                    onChange={(e) => setSelectedLanguage(e.target.value)}
+                    className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg outline-none cursor-pointer"
+                  >
+                    {INDIAN_LANGUAGES.map(lang => (
+                      <option key={lang.name} value={lang.name}>
+                        {lang.name} ({lang.native})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              { }
               <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 {aiChatHistory.length === 0 && !loadingHistory ? (
                   <div className="flex flex-col items-center justify-center h-full text-center p-8">
@@ -2831,7 +2881,7 @@ export default function ReportDetail() {
                 )}
               </div>
 
-              {}
+              { }
               <form onSubmit={handleSendAIQuestion} className="p-4 border-t border-gray-100 bg-white shadow-inner">
                 <div className="relative flex items-center gap-2">
                   <div className="relative flex-1 flex items-center">
@@ -2908,7 +2958,7 @@ export default function ReportDetail() {
         </div>
 
         { }
-        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-6 mt-6">
+        {/* <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-6 mt-6">
           <div className="flex items-start gap-4">
             <div className="flex-shrink-0">
               <div className="p-2 bg-yellow-200 rounded-lg">
@@ -2926,7 +2976,7 @@ export default function ReportDetail() {
               </p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         { }
         {showAnalysisModal && analysisResults && !isPrinting && (
@@ -3680,7 +3730,7 @@ export default function ReportDetail() {
           </div>
         )}
 
-        {}
+        { }
         <ConfirmationModal
           isOpen={isDeleteModalOpen}
           onClose={() => setIsDeleteModalOpen(false)}
@@ -3693,7 +3743,7 @@ export default function ReportDetail() {
           icon={Trash2}
         />
 
-        {}
+        { }
         <ConfirmationModal
           isOpen={isClearChatModalOpen}
           onClose={() => setIsClearChatModalOpen(false)}

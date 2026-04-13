@@ -10,8 +10,8 @@ class SocketService {
   }
 
   connect(token) {
-    if (this.socket?.connected) {
-      console.log('Socket already connected');
+    if (this.socket) {
+      console.log('Socket already initialized or connecting');
       return this.socket;
     }
 

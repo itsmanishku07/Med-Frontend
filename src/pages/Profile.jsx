@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import api, { appointmentAPI } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import {
-  User, Mail, Phone, MapPin, Edit3, Save, X, Plus, Stethoscope, Camera, CheckCircle, Calendar, FileText, Eye
+  User, Mail, Phone, MapPin, Edit3, Save, X, Plus, Stethoscope, Camera, CheckCircle, Calendar, FileText, Eye, BookOpen
 } from 'lucide-react'
 
 const MEDICAL_SPECIALIZATIONS = [
@@ -730,6 +730,27 @@ function Profile() {
           </div>
         </div>
       )}
+
+      {/* Help & Documentation Section */}
+      <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-600 mt-6 animate-fade-in">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4 text-center md:text-left">
+            <div className="p-3 bg-blue-50 rounded-xl">
+              <BookOpen className="w-8 h-8 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Application Documentation</h2>
+              <p className="text-sm text-gray-500 max-w-md">Master all the features of MedReport AI—from report analysis to secure consultation—with our detailed guide.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/docs')}
+            className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-extrabold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-xl hover:shadow-blue-200 active:scale-95 whitespace-nowrap"
+          >
+            Explore Docs
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

@@ -6,6 +6,8 @@ import { toast } from 'react-hot-toast'
 import api from '../services/api'
 import socketService from '../services/socket'
 
+// Global set to keep track of processed notification IDs to prevent duplicate toasts
+const processedNotifications = new Set()
 
 function NotificationBell() {
   const { isAuthenticated, userProfile, getToken } = useAuth()
@@ -27,6 +29,7 @@ function NotificationBell() {
       const interval = setInterval(loadNotifications, 120000)
       return () => {
         clearInterval(interval)
+        // Only remove listener if we really need to, otherwise it interrupts other instances
         socketService.off('new_notification')
       }
     } else {
@@ -46,9 +49,23 @@ function NotificationBell() {
       socketService.onNewNotification((notification) => {
         console.log('Received new notification:', notification)
         
+        const notifId = notification.id || Date.now().toString()
+        if (processedNotifications.has(notifId)) {
+          // Already processed, skip duplicate toast
+          return
+        }
+        processedNotifications.add(notifId)
+        
+        // Prevent set from growing indefinitely
+        if (processedNotifications.size > 100) {
+          const iterator = processedNotifications.values()
+          processedNotifications.delete(iterator.next().value)
+        }
+        
         const notificationMessage = notification.message || 'You have a new notification'
         toast.success(notificationMessage, {
           duration: 4000,
+          id: `toast-${notifId}`, // Use the same toast ID to prevent duplicates in react-hot-toast
           icon: notification.type === 'NEW_MESSAGE' ? '💬' : '🔔',
           onClick: () => {
             if (notification.chat_id) {
